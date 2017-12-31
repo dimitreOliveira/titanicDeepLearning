@@ -76,6 +76,84 @@ def forward_propagation(x, parameters):
     return z2
 
 
+def L_model_forward(X, parameters):
+    """
+    Implement forward propagation for the [LINEAR->RELU]*(L-1)->LINEAR->SIGMOID computation
+    Arguments:
+    X -- data, numpy array of shape (input size, number of examples)
+    parameters -- output of initialize_parameters_deep()
+    Returns:
+    AL -- last post-activation value
+    caches -- list of caches containing:
+                every cache of linear_relu_forward() (there are L-1 of them, indexed from 0 to L-2)
+                the cache of linear_sigmoid_forward() (there is one, indexed L-1)
+    """
+
+    A = X
+    L = len(parameters) // 2  # number of layers in the neural network
+    print(L)
+
+    # Implement [LINEAR -> RELU]*(L-1).
+    for l in range(1, L):
+        print(l)
+        A_prev = A
+        A = linear_activation_forward(A_prev, parameters['w%s' % l], parameters['b%s' % l], 'relu')
+
+    # Last layer must output only LINEAR
+    AL = tf.matmul(A, parameters['w%s' % L]) + parameters['b%s' % L]
+
+    return AL
+
+
+def linear_activation_forward(A_prev, W, b, activation):
+    """
+    Implement the forward propagation for the LINEAR->ACTIVATION layer
+    Arguments:
+    A_prev -- activations from previous layer (or input data): (size of previous layer, number of examples)
+    W -- weights matrix: numpy array of shape (size of current layer, size of previous layer)
+    b -- bias vector, numpy array of shape (size of the current layer, 1)
+    activation -- the activation to be used in this layer, stored as a text string: "sigmoid" or "relu"
+    Returns:
+    A -- the output of the activation function, also called the post-activation value
+    cache -- a python dictionary containing "linear_cache" and "activation_cache";
+             stored for computing the backward pass efficiently
+    """
+
+    if activation == "sigmoid":
+        # Inputs: "A_prev, W, b". Outputs: "A, activation_cache".
+        Z = tf.matmul(A_prev, W) + b
+        A = tf.nn.sigmoid(Z)
+
+    elif activation == "relu":
+        # Inputs: "A_prev, W, b". Outputs: "A, activation_cache".
+        Z = tf.matmul(A_prev, W) + b
+        A = tf.nn.relu(Z)
+
+    return A
+
+
+def initialize_parameters_deep(layer_dims):
+    """
+    Arguments:
+    layer_dims -- python array (list) containing the dimensions of each layer in our network
+    Returns:
+    parameters -- python dictionary containing your parameters "W1", "b1", ..., "WL", "bL":
+                    Wl -- weight matrix of shape (layer_dims[l], layer_dims[l-1])
+                    bl -- bias vector of shape (layer_dims[l], 1)
+    """
+
+    parameters = {}
+    L = len(layer_dims)  # number of layers in the network
+
+    for l in range(1, L):
+        # parameters['w' + str(l)] = np.dot(np.random.randn(layer_dims[l], layer_dims[l - 1]), 0.01)
+        # parameters['b' + str(l)] = np.zeros((layer_dims[l], 1))
+        parameters['w' + str(l)] = tf.get_variable('w' + str(l), [layer_dims[l - 1], layer_dims[l]], initializer=tf.contrib.layers.xavier_initializer(seed=1))
+        parameters['b' + str(l)] = tf.get_variable('b' + str(l), [layer_dims[l]], initializer=tf.zeros_initializer())
+
+    return parameters
+
+
 def compute_cost(z3, y):
     """
     Computes the cost

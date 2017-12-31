@@ -2,7 +2,6 @@ import math
 import csv
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 
 
 def load_data(train_path, test_path):
@@ -27,6 +26,7 @@ def load_data(train_path, test_path):
 def generate_train_subsets(train_data, percentage):
     """
     :param train_data: total train data
+    :param percentage: percentage of training set used for actual training
     :return: train_dataset 80% of data as train set
              validate_dataset 20% data as validate set
     """

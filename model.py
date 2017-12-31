@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.python.framework import ops
-from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy
+# from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy
+from methods import *
 from dataset import generate_train_subsets
 
 
@@ -38,9 +39,11 @@ def model(train, labels, learning_rate=0.01, num_epochs=15001, train_size=0.8,
 
     x, y = create_placeholders(input_size, output_size)
     tf_valid_dataset = tf.cast(tf.constant(validation_set), tf.float32)
-    parameters = initialize_parameters(input_size, output_size, n_nodes)
+    # parameters = initialize_parameters(input_size, output_size, n_nodes)
+    parameters = initialize_parameters_deep([input_size, n_nodes, output_size])
 
-    z3 = forward_propagation(x, parameters)
+    # z3 = forward_propagation(x, parameters)
+    z3 = L_model_forward(x, parameters)
     cost = compute_cost(z3, y)
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
