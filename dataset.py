@@ -5,6 +5,13 @@ import pandas as pd
 
 
 def load_data(train_path, test_path):
+    """
+    method for data loading
+    :param train_path: path for the train set file
+    :param test_path: path for the test set file
+    :return: a 'pandas' array for each set
+    """
+
     train_data = pd.read_csv(train_path)
     test_data = pd.read_csv(test_path)
 

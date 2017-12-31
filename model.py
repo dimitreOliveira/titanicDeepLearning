@@ -16,18 +16,18 @@ train_dataset_size = train.shape[0]
 train_raw_labels = train.Survived.values
 
 # pre-process
-train_pre = train.drop(['Survived', 'Name', 'Ticket', 'Cabin', 'PassengerId', 'Embarked', 'Age', 'Sex'], axis=1).values
-# test_pre = test.drop(['Name', 'Ticket', 'Cabin', 'PassengerId', 'Embarked', 'Age', 'Sex'], axis=1).values
+traint_pre = train.drop(['Survived', 'Name', 'Ticket', 'Cabin', 'PassengerId', 'Embarked', 'Age', 'Sex'], axis=1).values
+test_pre = test.drop(['Name', 'Ticket', 'Cabin', 'PassengerId', 'Embarked', 'Age', 'Sex'], axis=1).values
 
 # The labels need to be one-hot encoded
 train_labels = convert_to_one_hot(train_dataset_size, train_raw_labels, CLASSES)
 
-X_train, X_test = generate_train_subsets(train_pre)
+X_train, X_test = generate_train_subsets(traint_pre)
 Y_train, Y_test = generate_train_subsets(train_labels)
 
 
 def model(X_train, Y_train, X_test, Y_test, learning_rate=0.01,
-          num_epochs=301, print_cost=True):
+          num_epochs=3001, print_cost=True):
     """
     Implements a three-layer tensorflow neural network: LINEAR->RELU->LINEAR->RELU->LINEAR->SOFTMAX.
 
@@ -83,7 +83,7 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate=0.01,
         plt.ylabel('cost')
         plt.xlabel('iterations (per tens)')
         plt.title("Learning rate =" + str(learning_rate))
-        # plt.show()
+        plt.show()
 
         # lets save the parameters in a variable
         parameters = sess.run(parameters)
@@ -98,21 +98,17 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate=0.01,
         print("Test Accuracy:", accuracy.eval({X: X_test, Y: Y_test}))
         print('pred2')
         print(np.sum(np.argmax(prediction, 1) == np.argmax(Y_train, 1)) / prediction.shape[0])
-        # print(np.sum(np.argmax(train_prediction.eval(), 1) == np.argmax(Y_train, 1)) / train_prediction.eval().shape[0])
         print(np.sum(np.argmax(valid_prediction.eval(), 1) == np.argmax(Y_test, 1)) / valid_prediction.eval().shape[0])
+        # print(np.sum(np.argmax(train_prediction.eval(), 1) == np.argmax(Y_train, 1)) / train_prediction.eval().shape[0])
 
-        print('predictions')
-        final_prediction = predict(X_test, parameters)
-        # print(final_prediction)
+        # prediction
+        final_prediction = predict(test_pre, parameters)
 
+        # output submission
         output_submission(test.PassengerId.values, final_prediction, 'PassengerId', 'Survived',
-                          'titanic_submission2.csv')
+                          'submission.csv')
 
         return parameters
 
 
 parameters = model(X_train, Y_train, X_test, Y_test)
-
-
-
-# output_submission(test.PassengerId.values, final_prediction, 'PassengerId', 'Survived', 'titanic_submission.csv')
