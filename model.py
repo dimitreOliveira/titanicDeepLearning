@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.python.framework import ops
 from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy
+from dataset import generate_train_subsets
 
 
-def model(train_set, train_labels, validation_set, validation_labels, learning_rate=0.01, num_epochs=15001,
+def model(train, labels, learning_rate=0.01, num_epochs=15001, train_size=0.8,
           print_cost=True, plot_cost=True):
     """
     Implements a three-layer tensorflow neural network: LINEAR->RELU->LINEAR->RELU->LINEAR->SOFTMAX.
@@ -24,6 +25,11 @@ def model(train_set, train_labels, validation_set, validation_labels, learning_r
     """
 
     ops.reset_default_graph()  # to be able to rerun the model without overwriting tf variables
+
+    # generate train and labels sub sets
+    train_set, validation_set = generate_train_subsets(train, train_size)
+    train_labels, validation_labels = generate_train_subsets(labels, train_size)
+
     input_size = train_set.shape[1]
     output_size = train_labels.shape[1]
     n_nodes = 25
@@ -77,7 +83,7 @@ def model(train_set, train_labels, validation_set, validation_labels, learning_r
         print('Validation accuracy: {:.2f}'.format(validation_accuracy))
 
         # output submission file name
-        submission_name = 'submisson-in{}-epoch{}-lr{}-tr_acc-{:.2f}-vd_acc{:.2f}.csv'\
-            .format(input_size, num_epochs, learning_rate, train_accuracy, validation_accuracy)
+        submission_name = 'submisson-tr_acc-{:.2f}-vd_acc{:.2f}-in{}-lr{}-size{}-epoch{}.csv'\
+            .format(train_accuracy, validation_accuracy, input_size, learning_rate, train_size, num_epochs)
 
         return parameters, submission_name

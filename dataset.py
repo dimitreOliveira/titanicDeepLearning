@@ -24,14 +24,14 @@ def load_data(train_path, test_path):
     return train_data, test_data
 
 
-def generate_train_subsets(train_data):
+def generate_train_subsets(train_data, percentage):
     """
     :param train_data: total train data
     :return: train_dataset 80% of data as train set
              validate_dataset 20% data as validate set
     """
     data_size = train_data.shape[0]
-    train_size = math.ceil(data_size * 0.8)
+    train_size = math.ceil(data_size * percentage)
     validate_size = data_size - train_size
     train_dataset = train_data[validate_size:]
     validate_dataset = train_data[:validate_size]
