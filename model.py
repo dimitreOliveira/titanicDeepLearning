@@ -2,12 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.python.framework import ops
-from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, predict, accuracy
-from dataset import output_submission
+from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy
 
 
-def model(train_set, train_labels, validation_set, validation_labels, test_set, pre_test_set, learning_rate=0.01,
-          num_epochs=3001, print_cost=True, plot_cost=True):
+def model(train_set, train_labels, validation_set, validation_labels, learning_rate=0.01, num_epochs=15001,
+          print_cost=True, plot_cost=True):
     """
     Implements a three-layer tensorflow neural network: LINEAR->RELU->LINEAR->RELU->LINEAR->SOFTMAX.
 
@@ -18,7 +17,7 @@ def model(train_set, train_labels, validation_set, validation_labels, test_set, 
     validation_labels -- validate set labels
     learning_rate -- learning rate of the optimization
     num_epochs -- number of epochs of the optimization loop
-    print_cost -- True to print the cost every 100 epochs
+    print_cost -- True to print the cost every 500 epochs
 
     Returns:
     parameters -- parameters learnt by the model. They can then be used to predict.
@@ -60,7 +59,6 @@ def model(train_set, train_labels, validation_set, validation_labels, test_set, 
             if print_cost is True and epoch % 5 == 0:
                 costs.append(epoch_cost)
 
-        # plot the cost
         if plot_cost is True:
             plt.plot(np.squeeze(costs))
             plt.ylabel('cost')
@@ -72,25 +70,14 @@ def model(train_set, train_labels, validation_set, validation_labels, test_set, 
         parameters = sess.run(parameters)
         print("Parameters have been trained!")
 
-        # Calculate the correct predictions
-        # correct_prediction = tf.equal(tf.argmax(Z3), tf.argmax(y))
-
-        # Calculate accuracy on the test set
-        # accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-        # print("Train Accuracy:", accuracy.eval({x: train_set, y: train_labels}))
-        # print("Test Accuracy:", accuracy.eval({x: validation_set, y: validation_labels}))
+        # Calculate accuracy on the train and validation set
         train_accuracy = accuracy(prediction, train_labels)
         validation_accuracy = accuracy(valid_prediction.eval(), validation_labels)
         print('Train accuracy: {:.2f}'.format(train_accuracy))
         print('Validation accuracy: {:.2f}'.format(validation_accuracy))
-        # print('Train accuracy: {:.2f}'.format(accuracy(train_prediction.eval(), train_labels)))
 
-        # prediction
-        final_prediction = predict(pre_test_set, parameters)
-
-        # output submission
+        # output submission file name
         submission_name = 'submisson-in{}-epoch{}-lr{}-tr_acc-{:.2f}-vd_acc{:.2f}.csv'\
             .format(input_size, num_epochs, learning_rate, train_accuracy, validation_accuracy)
-        output_submission(test_set.PassengerId.values, final_prediction, 'PassengerId', 'Survived', submission_name)
 
-        return parameters
+        return parameters, submission_name

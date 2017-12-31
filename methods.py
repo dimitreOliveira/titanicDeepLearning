@@ -94,14 +94,31 @@ def compute_cost(z3, y):
 
 
 def predict(data, parameters):
-    tf_test_dataset = tf.cast(tf.constant(data), tf.float32)
-    z3_valid = forward_propagation(tf_test_dataset, parameters)
-    valid_prediction = tf.nn.softmax(z3_valid)
-    prediction = valid_prediction.eval()
+    """
+    make a prediction based on a data set and parameters
+    :param data: based data set
+    :param parameters: based parameters
+    :return: array of predictions
+    """
+    init = tf.global_variables_initializer()
+    with tf.Session() as sess:
+        sess.run(init)
+
+        dataset = tf.cast(tf.constant(data), tf.float32)
+        fw_prop_result = forward_propagation(dataset, parameters)
+        fw_prop_activation = tf.nn.softmax(fw_prop_result)
+        prediction = fw_prop_activation.eval()
 
     return prediction
 
 
 def accuracy(predictions, labels):
+    """
+    calculate accuracy between two data sets
+    :param predictions: data set of predictions
+    :param labels: data set of labels (real values)
+    :return: percentage of correct predictions
+    """
     prediction_size = predictions.shape[0]
-    return 100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / prediction_size
+    prediction_accuracy = np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / prediction_size
+    return 100.0 * prediction_accuracy

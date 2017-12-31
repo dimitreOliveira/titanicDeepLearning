@@ -1,5 +1,6 @@
-from dataset import load_data, convert_to_one_hot, generate_train_subsets
+from dataset import load_data, convert_to_one_hot, generate_train_subsets, output_submission
 from model import model
+from methods import predict
 
 
 TRAIN_PATH = 'data/train.csv'
@@ -21,5 +22,9 @@ train_labels = convert_to_one_hot(train_dataset_size, train_raw_labels, CLASSES)
 train_set, test_set = generate_train_subsets(train_pre)
 train_labels, test_labels = generate_train_subsets(train_labels)
 
-trained_parameters = model(train_set, train_labels, test_set, test_labels, test, test_pre,
-                           num_epochs=1001, learning_rate=0.0001)
+trained_parameters, submission_name = model(train_set, train_labels, test_set, test_labels,
+                                            num_epochs=1001, learning_rate=0.0001)
+
+final_prediction = predict(test_pre, trained_parameters)
+
+output_submission(test.PassengerId.values, final_prediction, 'PassengerId', 'Survived', submission_name)
