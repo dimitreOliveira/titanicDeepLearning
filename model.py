@@ -1,13 +1,12 @@
-import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
+import numpy as np
 from tensorflow.python.framework import ops
-# from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy
-from methods import *
+from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy
 from dataset import generate_train_subsets
 
 
-def model(train, labels, learning_rate=0.01, num_epochs=15001, train_size=0.8,
+def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, train_size=0.8,
           print_cost=True, plot_cost=True):
     """
     Implements a three-layer tensorflow neural network: LINEAR->RELU->LINEAR->RELU->LINEAR->SOFTMAX.
@@ -33,24 +32,21 @@ def model(train, labels, learning_rate=0.01, num_epochs=15001, train_size=0.8,
 
     input_size = train_set.shape[1]
     output_size = train_labels.shape[1]
-    n_nodes = 25
     costs = []
     prediction = []
 
     x, y = create_placeholders(input_size, output_size)
     tf_valid_dataset = tf.cast(tf.constant(validation_set), tf.float32)
-    # parameters = initialize_parameters(input_size, output_size, n_nodes)
-    parameters = initialize_parameters_deep([input_size, n_nodes, output_size])
+    parameters = initialize_parameters(layers_dims)
 
-    # z3 = forward_propagation(x, parameters)
-    z3 = L_model_forward(x, parameters)
-    cost = compute_cost(z3, y)
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+    fw_output = forward_propagation(x, parameters)
+    train_prediction = tf.nn.softmax(fw_output)
+    cost = compute_cost(fw_output, y)
 
-    train_prediction = tf.nn.softmax(z3)
+    fw_output_valid = forward_propagation(tf_valid_dataset, parameters)
+    valid_prediction = tf.nn.softmax(fw_output_valid)
 
-    z3_valid = forward_propagation(tf_valid_dataset, parameters)
-    valid_prediction = tf.nn.softmax(z3_valid)
+    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
     init = tf.global_variables_initializer()
 
@@ -86,7 +82,7 @@ def model(train, labels, learning_rate=0.01, num_epochs=15001, train_size=0.8,
         print('Validation accuracy: {:.2f}'.format(validation_accuracy))
 
         # output submission file name
-        submission_name = 'submisson-tr_acc-{:.2f}-vd_acc{:.2f}-in{}-lr{}-size{}-epoch{}.csv'\
-            .format(train_accuracy, validation_accuracy, input_size, learning_rate, train_size, num_epochs)
+        submission_name = 'submisson-tr_acc-{:.2f}-vd_acc{:.2f}-in{}-lr{}-size{}-ly{}-epoch{}.csv'\
+            .format(train_accuracy, validation_accuracy, input_size, learning_rate, train_size, layers_dims, num_epochs)
 
         return parameters, submission_name
