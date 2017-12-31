@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.python.framework import ops
-from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, predict
+from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, predict, accuracy
 from dataset import load_data, convert_to_one_hot, output_submission, generate_train_subsets
 
 
@@ -16,13 +16,13 @@ train_dataset_size = train.shape[0]
 train_raw_labels = train.Survived.values
 
 # pre-process
-traint_pre = train.drop(['Survived', 'Name', 'Ticket', 'Cabin', 'PassengerId', 'Embarked', 'Age', 'Sex'], axis=1).values
+train_pre = train.drop(['Survived', 'Name', 'Ticket', 'Cabin', 'PassengerId', 'Embarked', 'Age', 'Sex'], axis=1).values
 test_pre = test.drop(['Name', 'Ticket', 'Cabin', 'PassengerId', 'Embarked', 'Age', 'Sex'], axis=1).values
 
 # The labels need to be one-hot encoded
 train_labels = convert_to_one_hot(train_dataset_size, train_raw_labels, CLASSES)
 
-X_train, X_test = generate_train_subsets(traint_pre)
+X_train, X_test = generate_train_subsets(train_pre)
 Y_train, Y_test = generate_train_subsets(train_labels)
 
 
@@ -45,16 +45,17 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate=0.01,
     """
 
     ops.reset_default_graph()  # to be able to rerun the model without overwriting tf variables
-    n_x = X_train.shape[1]  # n_y : input size
-    n_y = Y_train.shape[1]  # n_y : output size
+    input_size = X_train.shape[1]
+    output_size = Y_train.shape[1]
+    n_nodes = 25
     costs = []
 
-    X, Y = create_placeholders(n_x, n_y)
+    x, y = create_placeholders(input_size, output_size)
     tf_valid_dataset = tf.cast(tf.constant(X_test), tf.float32)
-    parameters = initialize_parameters()
+    parameters = initialize_parameters(input_size, output_size, n_nodes)
 
-    Z3 = forward_propagation(X, parameters)
-    cost = compute_cost(Z3, Y)
+    Z3 = forward_propagation(x, parameters)
+    cost = compute_cost(Z3, y)
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
     train_prediction = tf.nn.softmax(Z3)
@@ -69,11 +70,10 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate=0.01,
 
         for epoch in range(num_epochs):
             epoch_cost = 0.
-            # _, batch_cost = sess.run([optimizer, cost], feed_dict={X: X_train, Y: Y_train})
-            _, batch_cost, prediction = sess.run([optimizer, cost, train_prediction], feed_dict={X: X_train, Y: Y_train})
+            _, batch_cost, prediction = sess.run([optimizer, cost, train_prediction], feed_dict={x: X_train, y: Y_train})
             epoch_cost += batch_cost
 
-            if print_cost is True and epoch % 100 == 0:
+            if print_cost is True and epoch % 500 == 0:
                 print("Cost after epoch %i: %f" % (epoch, epoch_cost))
             if print_cost is True and epoch % 5 == 0:
                 costs.append(epoch_cost)
@@ -90,25 +90,27 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate=0.01,
         print("Parameters have been trained!")
 
         # Calculate the correct predictions
-        correct_prediction = tf.equal(tf.argmax(Z3), tf.argmax(Y))
+        # correct_prediction = tf.equal(tf.argmax(Z3), tf.argmax(y))
 
         # Calculate accuracy on the test set
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-        print("Train Accuracy:", accuracy.eval({X: X_train, Y: Y_train}))
-        print("Test Accuracy:", accuracy.eval({X: X_test, Y: Y_test}))
-        print('pred2')
-        print(np.sum(np.argmax(prediction, 1) == np.argmax(Y_train, 1)) / prediction.shape[0])
-        print(np.sum(np.argmax(valid_prediction.eval(), 1) == np.argmax(Y_test, 1)) / valid_prediction.eval().shape[0])
-        # print(np.sum(np.argmax(train_prediction.eval(), 1) == np.argmax(Y_train, 1)) / train_prediction.eval().shape[0])
+        # accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+        # print("Train Accuracy:", accuracy.eval({x: X_train, y: Y_train}))
+        # print("Test Accuracy:", accuracy.eval({x: X_test, y: Y_test}))
+        train_accuracy = accuracy(prediction, Y_train)
+        validation_accuracy = accuracy(valid_prediction.eval(), Y_test)
+        print('Train accuracy: {:.2f}'.format(train_accuracy))
+        print('Validation accuracy: {:.2f}'.format(validation_accuracy))
+        # print('Train accuracy: {:.2f}'.format(accuracy(train_prediction.eval(), Y_train)))
 
         # prediction
         final_prediction = predict(test_pre, parameters)
 
         # output submission
-        output_submission(test.PassengerId.values, final_prediction, 'PassengerId', 'Survived',
-                          'submission.csv')
+        submission_name = 'submisson-in{}-epoch{}-lr{}-tr_acc-{:.2f}-vd_acc{:.2f}.csv'\
+            .format(input_size, num_epochs, learning_rate, train_accuracy, validation_accuracy)
+        output_submission(test.PassengerId.values, final_prediction, 'PassengerId', 'Survived', submission_name)
 
         return parameters
 
 
-parameters = model(X_train, Y_train, X_test, Y_test)
+parameters = model(X_train, Y_train, X_test, Y_test, num_epochs=20001, learning_rate=0.0001)

@@ -57,7 +57,8 @@ def output_submission(test_ids, predictions, id_column, predction_column, file_n
     :param file_name: string for the output file name
     :return: output a csv with ids ands predictions
     """
-    print('Outputting csv')
+
+    print('Outputting csv...')
     with open(file_name, 'w') as submission:
         writer = csv.writer(submission)
         writer.writerow([id_column, predction_column])

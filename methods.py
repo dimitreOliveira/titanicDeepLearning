@@ -1,51 +1,52 @@
 import tensorflow as tf
+import numpy as np
 
 
-def create_placeholders(n_x, n_y):
+def create_placeholders(input_size, output_size):
     """
     Creates the placeholders for the tensorflow session.
 
     Arguments:
-    n_x -- scalar
-    n_y -- scalar
+    input_size -- scalar, input size
+    output_size -- scalar, output size
 
     Returns:
-    X -- placeholder for the data input, of shape [n_x, None] and dtype "float"
-    Y -- placeholder for the input labels, of shape [n_y, None] and dtype "float"
+    X -- placeholder for the data input, of shape [None, input_size] and dtype "float"
+    Y -- placeholder for the input labels, of shape [None, output_size] and dtype "float"
     """
 
-    X = tf.placeholder(shape=(None, n_x), dtype=tf.float32, name="X")
-    Y = tf.placeholder(shape=(None, n_y), dtype=tf.float32, name="Y")
+    X = tf.placeholder(shape=(None, input_size), dtype=tf.float32, name="X")
+    Y = tf.placeholder(shape=(None, output_size), dtype=tf.float32, name="Y")
 
     return X, Y
 
 
-def initialize_parameters():
+def initialize_parameters(input_size, output_size, n_nodes):
     """
     Initializes parameters to build a neural network with tensorflow. The shapes are:
-                        W1 : [25, 713]
-                        b1 : [25, 1]
-                        W2 : [713, 713]
-                        b2 : [713, 1]
+                        w1 : [4, 25]
+                        b1 : [25]
+                        w2 : [25, 2]
+                        b2 : [2]
 
     Returns:
     parameters -- a dictionary of tensors containing W1, b1, W2, b2, W3, b3
     """
 
-    W1 = tf.get_variable("W1", [4, 25], initializer=tf.contrib.layers.xavier_initializer(seed=1))
-    b1 = tf.get_variable("b1", [25], initializer=tf.zeros_initializer())
-    W2 = tf.get_variable("W2", [25, 2], initializer=tf.contrib.layers.xavier_initializer(seed=1))
-    b2 = tf.get_variable("b2", [2], initializer=tf.zeros_initializer())
+    w1 = tf.get_variable("w1", [input_size, n_nodes], initializer=tf.contrib.layers.xavier_initializer(seed=1))
+    b1 = tf.get_variable("b1", [n_nodes], initializer=tf.zeros_initializer())
+    w2 = tf.get_variable("w2", [n_nodes, output_size], initializer=tf.contrib.layers.xavier_initializer(seed=1))
+    b2 = tf.get_variable("b2", [output_size], initializer=tf.zeros_initializer())
 
-    parameters = {"W1": W1,
+    parameters = {"w1": w1,
                   "b1": b1,
-                  "W2": W2,
+                  "w2": w2,
                   "b2": b2}
 
     return parameters
 
 
-def forward_propagation(X, parameters):
+def forward_propagation(x, parameters):
     """
     Implements the forward propagation for the model: LINEAR -> RELU -> LINEAR -> RELU -> LINEAR -> SOFTMAX
 
@@ -59,23 +60,23 @@ def forward_propagation(X, parameters):
     """
 
     # Retrieve the parameters from the dictionary "parameters"
-    W1 = parameters['W1']
+    w1 = parameters['w1']
     b1 = parameters['b1']
-    W2 = parameters['W2']
+    w2 = parameters['w2']
     b2 = parameters['b2']
 
     # Z1 = tf.matmul(W1, X) + b1
     # A1 = tf.nn.relu(Z1)
     # Z2 = tf.matmul(W2, A1) + b2
 
-    Z1 = tf.matmul(X, W1) + b1
-    A1 = tf.nn.relu(Z1)
-    Z2 = tf.matmul(A1, W2) + b2
+    z1 = tf.matmul(x, w1) + b1
+    a1 = tf.nn.relu(z1)
+    z2 = tf.matmul(a1, w2) + b2
 
-    return Z2
+    return z2
 
 
-def compute_cost(Z3, Y):
+def compute_cost(z3, y):
     """
     Computes the cost
 
@@ -87,19 +88,19 @@ def compute_cost(Z3, Y):
     cost - Tensor of the cost function
     """
 
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=Z3, labels=Y))
+    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=z3, labels=y))
 
     return cost
 
 
-def predict(input, parameters):
-    tf_test_dataset = tf.cast(tf.constant(input), tf.float32)
-    # test_lay_1 = tf.nn.relu(tf.matmul(tf_test_dataset, weights1) + biases1)
-    # test_prediction = tf.nn.softmax(tf.matmul(test_lay_1, weights2) + biases2)
-    Z3_valid = forward_propagation(tf_test_dataset, parameters)
-    valid_prediction = tf.nn.softmax(Z3_valid)
+def predict(data, parameters):
+    tf_test_dataset = tf.cast(tf.constant(data), tf.float32)
+    z3_valid = forward_propagation(tf_test_dataset, parameters)
+    valid_prediction = tf.nn.softmax(z3_valid)
     prediction = valid_prediction.eval()
 
-    # X, _ = create_placeholders(n_x, n_y)
-    # prediction = tf.nn.softmax(forward_propagation(input, parameters))
     return prediction
+
+
+def accuracy(predictions, labels):
+    return 100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / predictions.shape[0]
