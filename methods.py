@@ -15,10 +15,10 @@ def create_placeholders(input_size, output_size):
     Y -- placeholder for the input labels, of shape [None, output_size] and dtype "float"
     """
 
-    X = tf.placeholder(shape=(None, input_size), dtype=tf.float32, name="X")
-    Y = tf.placeholder(shape=(None, output_size), dtype=tf.float32, name="Y")
+    x = tf.placeholder(shape=(None, input_size), dtype=tf.float32, name="X")
+    y = tf.placeholder(shape=(None, output_size), dtype=tf.float32, name="Y")
 
-    return X, Y
+    return x, y
 
 
 def initialize_parameters(input_size, output_size, n_nodes):
@@ -103,4 +103,5 @@ def predict(data, parameters):
 
 
 def accuracy(predictions, labels):
-    return 100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / predictions.shape[0]
+    prediction_size = predictions.shape[0]
+    return 100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / prediction_size
