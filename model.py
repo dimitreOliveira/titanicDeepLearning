@@ -82,7 +82,7 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
         print('Validation accuracy: {:.2f}'.format(validation_accuracy))
 
         # output submission file name
-        submission_name = 'submisson-tr_acc-{:.2f}-vd_acc{:.2f}-in{}-lr{}-size{}-ly{}-epoch{}.csv'\
-            .format(train_accuracy, validation_accuracy, input_size, learning_rate, train_size, layers_dims, num_epochs)
+        submission_name = 'submisson-tr_acc-{:.2f}-vd_acc{:.2f}-lr{}-size{}-ly{}-epoch{}.csv'\
+            .format(train_accuracy, validation_accuracy, learning_rate, train_size, layers_dims, num_epochs)
 
         return parameters, submission_name

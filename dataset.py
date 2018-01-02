@@ -9,6 +9,7 @@ def load_data(train_path, test_path):
     method for data loading
     :param train_path: path for the train set file
     :param test_path: path for the test set file
+    :param print_info: if true prints info about data
     :return: a 'pandas' array for each set
     """
 
@@ -23,7 +24,7 @@ def load_data(train_path, test_path):
     return train_data, test_data
 
 
-def generate_train_subsets(train_data, percentage):
+def generate_train_subsets(train_data, percentage, print_info=False):
     """
     :param train_data: total train data
     :param percentage: percentage of training set used for actual training
@@ -36,8 +37,9 @@ def generate_train_subsets(train_data, percentage):
     train_dataset = train_data[validate_size:]
     validate_dataset = train_data[:validate_size]
 
-    print('train', train_dataset.shape)
-    print('validate', validate_dataset.shape)
+    if print_info is True:
+        print('train', train_dataset.shape)
+        print('validate', validate_dataset.shape)
 
     return train_dataset, validate_dataset
 
