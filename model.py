@@ -7,7 +7,7 @@ from dataset import generate_train_subsets
 
 
 def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, train_size=0.8,
-          print_cost=True, plot_cost=True):
+          print_cost=True, print_accuracy=True, plot_cost=True):
     """
     Implements a three-layer tensorflow neural network: LINEAR->RELU->LINEAR->RELU->LINEAR->SOFTMAX.
 
@@ -35,6 +35,7 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
     train_costs = []
     test_costs = []
     prediction = []
+    best_iteration = [float('inf'), 0, float('-inf'), 0]
 
     x, y = create_placeholders(input_size, output_size)
     tf_valid_dataset = tf.cast(tf.constant(validation_set), tf.float32)
@@ -64,9 +65,25 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
             train_epoch_cost += train_batch_cost
             test_epoch_cost += test_batch_cost
 
+            validation_accuracy = accuracy(valid_prediction.eval(), validation_labels)
+
+            if test_epoch_cost < best_iteration[0]:
+                best_iteration[0] = test_epoch_cost
+                best_iteration[1] = epoch
+
+            if validation_accuracy > best_iteration[2]:
+                best_iteration[2] = validation_accuracy
+                best_iteration[3] = epoch
+
             if print_cost is True and epoch % 500 == 0:
                 print("Train cost after epoch %i: %f" % (epoch, train_epoch_cost))
                 print("Test cost after epoch %i: %f" % (epoch, test_epoch_cost))
+
+            if print_accuracy is True and epoch % 500 == 0:
+                train_accuracy = accuracy(prediction, train_labels)
+                validation_accuracy = accuracy(valid_prediction.eval(), validation_labels)
+                print('Train accuracy after epoch {}: {:.2f}'.format(epoch, train_accuracy))
+                print('Validation accuracy after epoch {}: {:.2f}'.format(epoch, validation_accuracy))
             if plot_cost is True and epoch % 10 == 0:
                 train_costs.append(train_epoch_cost)
                 test_costs.append(test_epoch_cost)
@@ -89,6 +106,12 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
         validation_accuracy = accuracy(valid_prediction.eval(), validation_labels)
         print('Train accuracy: {:.2f}'.format(train_accuracy))
         print('Validation accuracy: {:.2f}'.format(validation_accuracy))
+
+        # print lowest test cost from all epochs
+        print('Lowest test cost: {:.2f} at epoch {}'.format(best_iteration[0], best_iteration[1]))
+
+        # print highest test accuracy from all epochs
+        print('Highest test accuracy: {:.2f} at epoch {}'.format(best_iteration[2], best_iteration[3]))
 
         # output submission file name
         submission_name = 'submisson-tr_acc-{:.2f}-vd_acc{:.2f}-lr{}-size{}-ly{}-epoch{}.csv'\
