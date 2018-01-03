@@ -61,7 +61,7 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
 
             if print_cost is True and epoch % 500 == 0:
                 print("Cost after epoch %i: %f" % (epoch, epoch_cost))
-            if print_cost is True and epoch % 5 == 0:
+            if plot_cost is True and epoch % 5 == 0:
                 costs.append(epoch_cost)
 
         if plot_cost is True:

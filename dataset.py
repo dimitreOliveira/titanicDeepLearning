@@ -62,7 +62,7 @@ def output_submission(test_ids, predictions, id_column, predction_column, file_n
     """
 
     print('Outputting submission...')
-    with open(file_name, 'w') as submission:
+    with open('submissions/' + file_name, 'w') as submission:
         writer = csv.writer(submission)
         writer.writerow([id_column, predction_column])
         for test_id, test_prediction in zip(test_ids, np.argmax(predictions, 1)):
