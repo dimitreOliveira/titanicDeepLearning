@@ -68,3 +68,11 @@ def output_submission(test_ids, predictions, id_column, predction_column, file_n
         for test_id, test_prediction in zip(test_ids, np.argmax(predictions, 1)):
             writer.writerow([test_id, test_prediction])
     print('Output complete')
+
+
+def replace_na_with_mode(dataset, column_name):
+    dataset.loc[dataset.Embarked.isnull(), column_name] = dataset[column_name].mode()[0]
+
+
+def replace_na_with_median(dataset, column_name):
+    dataset.loc[dataset.Embarked.isnull(), column_name] = dataset[column_name].median()
