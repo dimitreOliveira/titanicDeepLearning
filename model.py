@@ -32,7 +32,8 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
 
     input_size = train_set.shape[1]
     output_size = train_labels.shape[1]
-    costs = []
+    train_costs = []
+    test_costs = []
     prediction = []
 
     x, y = create_placeholders(input_size, output_size)
@@ -41,12 +42,13 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
 
     fw_output = forward_propagation(x, parameters)
     train_prediction = tf.nn.softmax(fw_output)
-    cost = compute_cost(fw_output, y)
+    train_cost = compute_cost(fw_output, y)
 
     fw_output_valid = forward_propagation(tf_valid_dataset, parameters)
     valid_prediction = tf.nn.softmax(fw_output_valid)
+    test_cost = compute_cost(fw_output_valid, validation_labels)
 
-    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
+    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(train_cost)
 
     init = tf.global_variables_initializer()
 
@@ -54,21 +56,28 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
         sess.run(init)
 
         for epoch in range(num_epochs):
-            epoch_cost = 0.
+            train_epoch_cost = 0.
+            test_epoch_cost = 0.
             feed_dict = {x: train_set, y: train_labels}
-            _, batch_cost, prediction = sess.run([optimizer, cost, train_prediction], feed_dict=feed_dict)
-            epoch_cost += batch_cost
+            _, train_batch_cost, prediction, test_batch_cost = sess.run([optimizer, train_cost, train_prediction,
+                                                                         test_cost], feed_dict=feed_dict)
+            train_epoch_cost += train_batch_cost
+            test_epoch_cost += test_batch_cost
 
             if print_cost is True and epoch % 500 == 0:
-                print("Cost after epoch %i: %f" % (epoch, epoch_cost))
-            if plot_cost is True and epoch % 5 == 0:
-                costs.append(epoch_cost)
+                print("Train cost after epoch %i: %f" % (epoch, train_epoch_cost))
+                print("Test cost after epoch %i: %f" % (epoch, test_epoch_cost))
+            if plot_cost is True and epoch % 10 == 0:
+                train_costs.append(train_epoch_cost)
+                test_costs.append(test_epoch_cost)
 
         if plot_cost is True:
-            plt.plot(np.squeeze(costs))
+            plt.plot(np.squeeze(train_costs), label='Train cost')
+            plt.plot(np.squeeze(test_costs), label='Test cost')
             plt.ylabel('cost')
             plt.xlabel('iterations (per tens)')
             plt.title("Learning rate =" + str(learning_rate))
+            plt.legend()
             plt.show()
 
         # lets save the parameters in a variable
