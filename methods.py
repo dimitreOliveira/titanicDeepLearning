@@ -135,6 +135,26 @@ def accuracy(predictions, labels):
     :param labels: data set of labels (real values)
     :return: percentage of correct predictions
     """
+
     prediction_size = predictions.shape[0]
     prediction_accuracy = np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / prediction_size
+
     return 100.0 * prediction_accuracy
+
+
+def l2_regularizer(cost, parameters, n_layers, l2_beta):
+    """
+    Function to apply l2 regularization to the model
+    :param cost: usual cost of the model
+    :param parameters: parameters from the model (used to get weights values)
+    :param n_layers: number of layers of the model
+    :param l2_beta: beta value used for the normalization
+    :return: cost updated
+    """
+
+    regularizer = 0
+    for i in range(1, n_layers):
+        regularizer += tf.nn.l2_loss(parameters['w%s' % i])
+    cost = tf.reduce_mean(cost + l2_beta * regularizer)
+
+    return cost

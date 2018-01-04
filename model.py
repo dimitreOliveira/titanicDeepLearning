@@ -2,12 +2,12 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 from tensorflow.python.framework import ops
-from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy
+from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy, l2_regularizer
 from dataset import generate_train_subsets
 
 
 def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, train_size=0.8,
-          print_cost=True, print_accuracy=True, plot_cost=True):
+          print_cost=True, print_accuracy=True, plot_cost=True, use_l2=False, l2_beta=0.01):
     """
     Implements a three-layer tensorflow neural network: LINEAR->RELU->LINEAR->RELU->LINEAR->SOFTMAX.
 
@@ -36,6 +36,7 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
     test_costs = []
     prediction = []
     best_iteration = [float('inf'), 0, float('-inf'), 0]
+    n_layers = len(layers_dims)
 
     x, y = create_placeholders(input_size, output_size)
     tf_valid_dataset = tf.cast(tf.constant(validation_set), tf.float32)
@@ -48,6 +49,10 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
     fw_output_valid = forward_propagation(tf_valid_dataset, parameters)
     valid_prediction = tf.nn.softmax(fw_output_valid)
     test_cost = compute_cost(fw_output_valid, validation_labels)
+
+    if use_l2 is True:
+        train_cost = l2_regularizer(train_cost, parameters, n_layers, l2_beta)
+        test_cost = l2_regularizer(test_cost, parameters, n_layers, l2_beta)
 
     optimizer = tf.train.AdamOptimizer(learning_rate).minimize(train_cost)
 
