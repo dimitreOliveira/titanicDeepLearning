@@ -21,7 +21,7 @@ def create_placeholders(input_size, output_size):
     return x, y
 
 
-def forward_propagation(x, parameters):
+def forward_propagation(x, parameters, hidden_activation='relu'):
     """
     Implement forward propagation for the [LINEAR->RELU]*(L-1)->LINEAR-> computation
     Arguments:
@@ -37,7 +37,7 @@ def forward_propagation(x, parameters):
     # Implement [LINEAR -> RELU]*(L-1).
     for l in range(1, n_layers):
         a_prev = a
-        a = linear_activation_forward(a_prev, parameters['w%s' % l], parameters['b%s' % l], 'relu')
+        a = linear_activation_forward(a_prev, parameters['w%s' % l], parameters['b%s' % l], hidden_activation)
 
     # Last layer must output only LINEAR
     al = tf.matmul(a, parameters['w%s' % n_layers]) + parameters['b%s' % n_layers]
@@ -45,7 +45,7 @@ def forward_propagation(x, parameters):
     return al
 
 
-def forward_propagation_dropout(x, parameters, keep_prob):
+def forward_propagation_dropout(x, parameters, keep_prob, hidden_activation='relu'):
     """
     Implement forward propagation with dropout for the [LINEAR->RELU]*(L-1)->LINEAR-> computation
     Arguments:
@@ -62,7 +62,7 @@ def forward_propagation_dropout(x, parameters, keep_prob):
     # Implement [LINEAR -> RELU]*(L-1), with dropout
     for l in range(1, n_layers):
         a_prev = a_dropout
-        a = linear_activation_forward(a_prev, parameters['w%s' % l], parameters['b%s' % l], 'relu')
+        a = linear_activation_forward(a_prev, parameters['w%s' % l], parameters['b%s' % l], hidden_activation)
         a_dropout = tf.nn.dropout(a, keep_prob)
 
     # Last layer must output only LINEAR
@@ -86,14 +86,16 @@ def linear_activation_forward(a_prev, w, b, activation):
 
     a = None
     if activation == "sigmoid":
-        # Inputs: "A_prev, W, b". Outputs: "A".
         z = tf.matmul(a_prev, w) + b
         a = tf.nn.sigmoid(z)
 
     elif activation == "relu":
-        # Inputs: "A_prev, W, b". Outputs: "A".
         z = tf.matmul(a_prev, w) + b
         a = tf.nn.relu(z)
+
+    elif activation == "leaky relu":
+        z = tf.matmul(a_prev, w) + b
+        a = tf.nn.leaky_relu(z)
 
     return a
 

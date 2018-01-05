@@ -7,7 +7,7 @@ from dataset import generate_train_subsets
 
 
 def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, train_size=0.8,
-          print_cost=True, print_accuracy=True, plot_cost=True, use_l2=False, l2_beta=0.01, use_dropout=False, keep_prob=0.5):
+          print_cost=True, print_accuracy=True, plot_cost=True, use_l2=False, l2_beta=0.01, use_dropout=False, keep_prob=0.7, hidden_activation='relu'):
     """
     Implements a n-layer tensorflow neural network: LINEAR->RELU*(n times)->LINEAR->SOFTMAX.
     :param train: training set
@@ -21,6 +21,9 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
     :param plot_cost: True to plot the train and validation cost
     :param use_l2: True to use l2 regularization
     :param l2_beta: beta parameter for the l2 regularization
+    :param use_dropout: True to use dropout regularization
+    :param keep_prob: probability to keep each node of each hidden layer (dropout)
+    :param hidden_activation: activation function to be used on the hidden layers
     :return parameters: parameters learnt by the model. They can then be used to predict.
     :return submission_name: name for the trained model
     """
@@ -44,13 +47,13 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
     parameters = initialize_parameters(layers_dims)
 
     if use_dropout is True:
-        fw_output = forward_propagation_dropout(x, parameters, keep_prob)
+        fw_output = forward_propagation_dropout(x, parameters, keep_prob, hidden_activation)
     else:
-        fw_output = forward_propagation(x, parameters)
+        fw_output = forward_propagation(x, parameters, hidden_activation)
     train_prediction = tf.nn.softmax(fw_output)
     train_cost = compute_cost(fw_output, y)
 
-    fw_output_valid = forward_propagation(tf_valid_dataset, parameters)
+    fw_output_valid = forward_propagation(tf_valid_dataset, parameters, hidden_activation)
     valid_prediction = tf.nn.softmax(fw_output_valid)
     test_cost = compute_cost(fw_output_valid, validation_labels)
 
@@ -123,7 +126,12 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
         print('Highest validation accuracy: {:.2f} at epoch {}'.format(best_iteration[2], best_iteration[3]))
 
         # output submission file name
-        submission_name = 'submisson-tr_acc-{:.2f}-vd_acc{:.2f}-lr{}-size{}-ly{}-epoch{}.csv'\
+        submission_name = 'tr_acc-{:.2f}-vd_acc{:.2f}-lr{}-size{}-ly{}-epoch{}.csv'\
             .format(train_accuracy, validation_accuracy, learning_rate, train_size, layers_dims, num_epochs)
 
+        if use_l2 is True:
+            submission_name = 'l2{}-'.format(l2_beta) + submission_name
+
+        if use_dropout is True:
+            submission_name = 'dk{}-'.format(keep_prob) + submission_name
         return parameters, submission_name
