@@ -45,6 +45,33 @@ def forward_propagation(x, parameters):
     return al
 
 
+def forward_propagation_dropout(x, parameters, keep_prob):
+    """
+    Implement forward propagation with dropout for the [LINEAR->RELU]*(L-1)->LINEAR-> computation
+    Arguments:
+    x -- data, pandas array of shape (input size, number of examples)
+    parameters -- output of initialize_parameters()
+    parameters -- keep_prob = probability to keep each node of the layer
+    Returns:
+    al -- last LINEAR value
+    """
+
+    a_dropout = x
+    n_layers = len(parameters) // 2  # number of layers in the neural network
+
+    # Implement [LINEAR -> RELU]*(L-1), with dropout
+    for l in range(1, n_layers):
+        a_prev = a_dropout
+        a = linear_activation_forward(a_prev, parameters['w%s' % l], parameters['b%s' % l], 'relu')
+        a_dropout = tf.nn.dropout(a, keep_prob)
+
+    # Last layer must output only LINEAR
+    al = tf.matmul(a_dropout, parameters['w%s' % n_layers]) + parameters['b%s' % n_layers]
+    # al_dropout = tf.nn.dropout(al, keep_prob)
+
+    return al
+
+
 def linear_activation_forward(a_prev, w, b, activation):
     """
     Implement the forward propagation for the LINEAR->ACTIVATION layer
@@ -59,12 +86,12 @@ def linear_activation_forward(a_prev, w, b, activation):
 
     a = None
     if activation == "sigmoid":
-        # Inputs: "A_prev, W, b". Outputs: "A, activation_cache".
+        # Inputs: "A_prev, W, b". Outputs: "A".
         z = tf.matmul(a_prev, w) + b
         a = tf.nn.sigmoid(z)
 
     elif activation == "relu":
-        # Inputs: "A_prev, W, b". Outputs: "A, activation_cache".
+        # Inputs: "A_prev, W, b". Outputs: "A".
         z = tf.matmul(a_prev, w) + b
         a = tf.nn.relu(z)
 
@@ -116,6 +143,7 @@ def predict(data, parameters):
     :param parameters: based parameters
     :return: array of predictions
     """
+
     init = tf.global_variables_initializer()
     with tf.Session() as sess:
         sess.run(init)
@@ -142,15 +170,19 @@ def accuracy(predictions, labels):
     return 100.0 * prediction_accuracy
 
 
-def l2_regularizer(cost, l2_beta):
+def l2_regularizer(cost, l2_beta, parameters, n_layers):
     """
     Function to apply l2 regularization to the model
     :param cost: usual cost of the model
     :param l2_beta: beta value used for the normalization
+    :param parameters: parameters from the model (used to get weights values)
+    :param n_layers: number of layers of the model
     :return: cost updated
     """
 
-    regularizer = sum(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
-    cost = cost + l2_beta * regularizer
+    regularizer = 0
+    for i in range(1, n_layers):
+        regularizer += tf.nn.l2_loss(parameters['w%s' % i])
+        cost = tf.reduce_mean(cost + l2_beta * regularizer)
 
     return cost

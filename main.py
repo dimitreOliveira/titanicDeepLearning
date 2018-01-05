@@ -69,18 +69,28 @@ train_labels = convert_to_one_hot(train_dataset_size, train_raw_labels, CLASSES)
 
 input_layer = train_pre.shape[1]
 output_layer = 2
-num_epochs = 501
+num_epochs = 10001
 learning_rate = 0.001  # 0.01
 train_size = 0.7
 layers_dims = [input_layer, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, output_layer]
 
+# start = time.time()
+# trained_parameters, submission_name = model(train_pre, train_labels, layers_dims, train_size=train_size,
+#                                             num_epochs=num_epochs, learning_rate=learning_rate, use_l2=False, use_dropout=False,
+#                                             print_cost=False, print_accuracy=False, plot_cost=False)
+# end = time.time()
+# print(end - start)
+# print(submission_name)
+
+# num_epochs = 2842
 start = time.time()
 trained_parameters, submission_name = model(train_pre, train_labels, layers_dims, train_size=train_size,
-                                            num_epochs=num_epochs, learning_rate=learning_rate, use_l2=True, l2_beta=0.015,
-                                            print_cost=False, print_accuracy=False, plot_cost=True)
+                                            num_epochs=num_epochs, learning_rate=learning_rate, use_l2=False,
+                                            print_cost=False, print_accuracy=False, plot_cost=True, use_dropout=True, keep_prob=0.7)
 end = time.time()
 print(end - start)
 print(submission_name)
 
-# final_prediction = predict(test_pre, trained_parameters)
-# output_submission(test.PassengerId.values, final_prediction, 'PassengerId', 'Survived', submission_name)
+
+final_prediction = predict(test_pre, trained_parameters)
+output_submission(test.PassengerId.values, final_prediction, 'PassengerId', 'Survived', submission_name)

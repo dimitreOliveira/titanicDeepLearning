@@ -2,12 +2,12 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 from tensorflow.python.framework import ops
-from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy, l2_regularizer
+from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy, l2_regularizer, forward_propagation_dropout
 from dataset import generate_train_subsets
 
 
 def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, train_size=0.8,
-          print_cost=True, print_accuracy=True, plot_cost=True, use_l2=False, l2_beta=0.01):
+          print_cost=True, print_accuracy=True, plot_cost=True, use_l2=False, l2_beta=0.01, use_dropout=False, keep_prob=0.5):
     """
     Implements a n-layer tensorflow neural network: LINEAR->RELU*(n times)->LINEAR->SOFTMAX.
     :param train: training set
@@ -33,17 +33,20 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
 
     input_size = train_set.shape[1]
     output_size = train_labels.shape[1]
+    n_layers = len(layers_dims)
     train_costs = []
     test_costs = []
     prediction = []
     best_iteration = [float('inf'), 0, float('-inf'), 0]
-    n_layers = len(layers_dims)
 
     x, y = create_placeholders(input_size, output_size)
     tf_valid_dataset = tf.cast(tf.constant(validation_set), tf.float32)
     parameters = initialize_parameters(layers_dims)
 
-    fw_output = forward_propagation(x, parameters)
+    if use_dropout is True:
+        fw_output = forward_propagation_dropout(x, parameters, keep_prob)
+    else:
+        fw_output = forward_propagation(x, parameters)
     train_prediction = tf.nn.softmax(fw_output)
     train_cost = compute_cost(fw_output, y)
 
@@ -52,8 +55,8 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
     test_cost = compute_cost(fw_output_valid, validation_labels)
 
     if use_l2 is True:
-        train_cost = l2_regularizer(train_cost, l2_beta)
-        test_cost = l2_regularizer(test_cost, l2_beta)
+        train_cost = l2_regularizer(train_cost, l2_beta, parameters, n_layers)
+        test_cost = l2_regularizer(test_cost, l2_beta, parameters, n_layers)
 
     optimizer = tf.train.AdamOptimizer(learning_rate).minimize(train_cost)
 
