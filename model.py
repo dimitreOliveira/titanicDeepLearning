@@ -9,19 +9,20 @@ from dataset import generate_train_subsets
 def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, train_size=0.8,
           print_cost=True, print_accuracy=True, plot_cost=True, use_l2=False, l2_beta=0.01):
     """
-    Implements a three-layer tensorflow neural network: LINEAR->RELU->LINEAR->RELU->LINEAR->SOFTMAX.
-
-    Arguments:
-    train_set -- training set
-    train_labels -- training set labels
-    validation_set -- validate set
-    validation_labels -- validate set labels
-    learning_rate -- learning rate of the optimization
-    num_epochs -- number of epochs of the optimization loop
-    print_cost -- True to print the cost every 500 epochs
-
-    Returns:
-    parameters -- parameters learnt by the model. They can then be used to predict.
+    Implements a n-layer tensorflow neural network: LINEAR->RELU*(n times)->LINEAR->SOFTMAX.
+    :param train: training set
+    :param labels: validation set
+    :param layers_dims: array with the layer for the model
+    :param learning_rate: learning rate of the optimization
+    :param num_epochs: number of epochs of the optimization loop
+    :param train_size: percentage of the train set to use on training
+    :param print_cost: True to print the cost every 500 epochs
+    :param print_accuracy: True to print the accuracy every 500 epochs
+    :param plot_cost: True to plot the train and validation cost
+    :param use_l2: True to use l2 regularization
+    :param l2_beta: beta parameter for the l2 regularization
+    :return parameters: parameters learnt by the model. They can then be used to predict.
+    :return submission_name: name for the trained model
     """
 
     ops.reset_default_graph()  # to be able to rerun the model without overwriting tf variables
@@ -51,8 +52,8 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
     test_cost = compute_cost(fw_output_valid, validation_labels)
 
     if use_l2 is True:
-        train_cost = l2_regularizer(train_cost, parameters, n_layers, l2_beta)
-        test_cost = l2_regularizer(test_cost, parameters, n_layers, l2_beta)
+        train_cost = l2_regularizer(train_cost, l2_beta)
+        test_cost = l2_regularizer(test_cost, l2_beta)
 
     optimizer = tf.train.AdamOptimizer(learning_rate).minimize(train_cost)
 
@@ -82,7 +83,7 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
 
             if print_cost is True and epoch % 500 == 0:
                 print("Train cost after epoch %i: %f" % (epoch, train_epoch_cost))
-                print("Test cost after epoch %i: %f" % (epoch, test_epoch_cost))
+                print("Validation cost after epoch %i: %f" % (epoch, test_epoch_cost))
 
             if print_accuracy is True and epoch % 500 == 0:
                 train_accuracy = accuracy(prediction, train_labels)
@@ -95,7 +96,7 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
 
         if plot_cost is True:
             plt.plot(np.squeeze(train_costs), label='Train cost')
-            plt.plot(np.squeeze(test_costs), label='Test cost')
+            plt.plot(np.squeeze(test_costs), label='Validation cost')
             plt.ylabel('cost')
             plt.xlabel('iterations (per tens)')
             plt.title("Learning rate =" + str(learning_rate))
@@ -113,10 +114,10 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
         print('Validation accuracy: {:.2f}'.format(validation_accuracy))
 
         # print lowest test cost from all epochs
-        print('Lowest test cost: {:.2f} at epoch {}'.format(best_iteration[0], best_iteration[1]))
+        print('Lowest validation cost: {:.2f} at epoch {}'.format(best_iteration[0], best_iteration[1]))
 
         # print highest test accuracy from all epochs
-        print('Highest test accuracy: {:.2f} at epoch {}'.format(best_iteration[2], best_iteration[3]))
+        print('Highest validation accuracy: {:.2f} at epoch {}'.format(best_iteration[2], best_iteration[3]))
 
         # output submission file name
         submission_name = 'submisson-tr_acc-{:.2f}-vd_acc{:.2f}-lr{}-size{}-ly{}-epoch{}.csv'\
