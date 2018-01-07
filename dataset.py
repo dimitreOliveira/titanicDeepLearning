@@ -1,5 +1,6 @@
 import math
 import csv
+import re
 import numpy as np
 import pandas as pd
 
@@ -9,7 +10,6 @@ def load_data(train_path, test_path):
     method for data loading
     :param train_path: path for the train set file
     :param test_path: path for the test set file
-    :param print_info: if true prints info about data
     :return: a 'pandas' array for each set
     """
 
@@ -55,8 +55,8 @@ def output_submission(test_ids, predictions, id_column, predction_column, file_n
     """
     :param test_ids: vector with test dataset ids
     :param predictions: vector with test dataset predictions
-    :param id_column: name of the id column
-    :param predction_column: name of the predction column
+    :param id_column: name of the output id column
+    :param predction_column: name of the output predction column
     :param file_name: string for the output file name
     :return: output a csv with ids ands predictions
     """
@@ -76,3 +76,53 @@ def replace_na_with_mode(dataset, column_name):
 
 def replace_na_with_median(dataset, column_name):
     dataset.loc[dataset.Embarked.isnull(), column_name] = dataset[column_name].median()
+
+
+def pre_process_data(df):
+    # setting `passengerID` as Index since it wont be necessary for the ana lysis
+    df = df.set_index("PassengerId")
+
+    # convert 'Sex' values
+    df['gender'] = df['Sex'].map({'female': 0, 'male': 1}).astype(int)
+
+    # We see that 2 passengers embarked data is missing, we fill those in as the most common Embarked value
+    replace_na_with_mode(df, 'Embarked')
+
+    # convert 'Embarked' values
+    df['embarkation'] = df['Embarked'].map({'C': 0, 'Q': 1, 'S': 2}).astype(int)
+
+    # get titles from the name
+    df['title'] = df.apply(lambda row: re.split('[,.]+', row['Name'])[1], axis=1)
+
+    # convert titles to values
+    df['title'] = df['title'].map({' Capt': 'Other', ' Master': 'Master', ' Mr': 'Mr', ' Don': 'Other',
+                                   ' Dona': 'Other', ' Lady': 'Other', ' Col': 'Other', ' Miss': 'Miss',
+                                   ' the Countess': 'Other', ' Dr': 'Other', ' Jonkheer': 'Other', ' Mlle': 'Other',
+                                   ' Sir': 'Other', ' Rev': 'Other', ' Ms': 'Other', ' Mme': 'Other', ' Major': 'Other',
+                                   ' Mrs': 'Mrs'})
+    df = pd.get_dummies(df, columns=['title'])
+
+
+    # create a new column 'family' as a sum of 'SibSp' and 'Parch'
+    # df['family'] = df['SibSp'] + df['Parch']
+    # df['family'] = df['family'].map(lambda x: 4 if x > 4 else x)
+
+    # create a new column 'FTicket' as the first character of the 'Ticket'
+    # df['FTicket'] = df['Ticket'].map(lambda x: x[0])
+    # df = pd.concat([df, pd.get_dummies(df['FTicket'])], axis=1)
+
+    # bin Fare into five intervals with equal amount of values
+    df['Fare-bin'] = pd.qcut(df.Fare, 5, labels=[1, 2, 3, 4, 5]).astype(int)
+
+    # Replace missing age values with median ages by gender
+    for gender in df['gender'].unique():
+        median_age = df[(df.gender == gender)].Age.median()
+        df.loc[(df.Age.isnull()) & (df.gender == gender), 'Age'] = median_age
+
+    # bin Age into seven intervals with equal amount of values
+    # ('baby','child','teenager','young','mid-age','over-50','senior')
+    bins = [0, 4, 12, 18, 30, 50, 65, 100]
+    age_index = (1, 2, 3, 4, 5, 6, 7)
+    df['Age-bin'] = pd.cut(df.Age, bins, labels=age_index).astype(int)
+
+    return df
