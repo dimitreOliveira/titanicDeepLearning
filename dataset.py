@@ -109,6 +109,8 @@ def pre_process_data(df):
 
     # create a new column 'FTicket' as the first character of the 'Ticket'
     df['FTicket'] = df['Ticket'].map(lambda x: x[0])
+    # combine smaller categories into one
+    df['FTicket'] = df['FTicket'].replace(['W', 'F', 'L', '5', '6', '7', '8', '9'], '4')
     df = pd.get_dummies(df, columns=['FTicket'])
 
     # bin Fare into five intervals with equal amount of values
