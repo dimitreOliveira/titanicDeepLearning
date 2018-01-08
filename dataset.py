@@ -28,6 +28,7 @@ def generate_train_subsets(train_data, percentage, print_info=False):
     """
     :param train_data: total train data
     :param percentage: percentage of training set used for actual training
+    :param print_info: is True prints information about the derived subsets
     :return: train_dataset 80% of data as train set
              validate_dataset 20% data as validate set
     """
@@ -102,27 +103,26 @@ def pre_process_data(df):
                                    ' Mrs': 'Mrs'})
     df = pd.get_dummies(df, columns=['title'])
 
-
     # create a new column 'family' as a sum of 'SibSp' and 'Parch'
     # df['family'] = df['SibSp'] + df['Parch']
     # df['family'] = df['family'].map(lambda x: 4 if x > 4 else x)
 
     # create a new column 'FTicket' as the first character of the 'Ticket'
-    # df['FTicket'] = df['Ticket'].map(lambda x: x[0])
-    # df = pd.concat([df, pd.get_dummies(df['FTicket'])], axis=1)
+    df['FTicket'] = df['Ticket'].map(lambda x: x[0])
+    df = pd.get_dummies(df, columns=['FTicket'])
 
     # bin Fare into five intervals with equal amount of values
-    df['Fare-bin'] = pd.qcut(df.Fare, 5, labels=[1, 2, 3, 4, 5]).astype(int)
+    df['Fare-bin'] = pd.qcut(df['Fare'], 5, labels=[1, 2, 3, 4, 5]).astype(int)
 
     # Replace missing age values with median ages by gender
     for gender in df['gender'].unique():
-        median_age = df[(df.gender == gender)].Age.median()
-        df.loc[(df.Age.isnull()) & (df.gender == gender), 'Age'] = median_age
+        median_age = df[(df['gender'] == gender)].Age.median()
+        df.loc[(df['Age'].isnull()) & (df['gender'] == gender), 'Age'] = median_age
 
     # bin Age into seven intervals with equal amount of values
     # ('baby','child','teenager','young','mid-age','over-50','senior')
     bins = [0, 4, 12, 18, 30, 50, 65, 100]
     age_index = (1, 2, 3, 4, 5, 6, 7)
-    df['Age-bin'] = pd.cut(df.Age, bins, labels=age_index).astype(int)
+    df['Age-bin'] = pd.cut(df['Age'], bins, labels=age_index).astype(int)
 
     return df
