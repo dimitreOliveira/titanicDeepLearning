@@ -8,7 +8,7 @@ from dataset import generate_train_subsets
 
 def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, train_size=0.8,
           print_cost=True, print_accuracy=True, plot_cost=True, plot_accuracy=False, use_l2=False, l2_beta=0.01, use_dropout=False,
-          keep_prob=0.7, hidden_activation='relu'):
+          keep_prob=0.7, hidden_activation='relu', return_max_acc=False):
     """
     Implements a n-layer tensorflow neural network: LINEAR->RELU*(n times)->LINEAR->SOFTMAX.
     :param train: training set
@@ -44,6 +44,7 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
     validation_accuracies = []
     prediction = []
     best_iteration = [float('inf'), 0, float('-inf'), 0]
+    best_acc_params = None
 
     x, y = create_placeholders(input_size, output_size)
     tf_valid_dataset = tf.cast(tf.constant(validation_set), tf.float32)
@@ -90,6 +91,8 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
             if validation_accuracy > best_iteration[2]:
                 best_iteration[2] = validation_accuracy
                 best_iteration[3] = epoch
+                if return_max_acc is True:
+                    best_acc_params = sess.run(parameters)
 
             if print_cost is True and epoch % 500 == 0:
                 print("Train cost after epoch %i: %f" % (epoch, train_epoch_cost))
@@ -125,8 +128,11 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
             plt.legend()
             plt.show()
 
-        # lets save the parameters in a variable
-        parameters = sess.run(parameters)
+        # save the parameters in a variable
+        if return_max_acc is True:
+            parameters = best_acc_params
+        else:
+            parameters = sess.run(parameters)
         print("Parameters have been trained!")
 
         # Calculate accuracy on the train and validation set

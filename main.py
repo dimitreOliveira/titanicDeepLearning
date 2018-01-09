@@ -44,7 +44,17 @@ layers_dims = [input_layer, 5, 10, 10, output_layer]
 trained_parameters, submission_name = model(train_pre, train_labels, layers_dims, train_size=train_size,
                                             num_epochs=num_epochs, learning_rate=learning_rate, use_l2=False, use_dropout=True,
                                             print_cost=False, print_accuracy=False, plot_cost=False, plot_accuracy=False,
-                                            l2_beta=0.01, keep_prob=0.8)
-# print(submission_name)
+                                            l2_beta=0.01, keep_prob=0.9, return_max_acc=True)
+print(submission_name)
 final_prediction = predict(test_pre, trained_parameters)
 output_submission(test.index.values, final_prediction, 'PassengerId', 'Survived', submission_name)
+
+
+# layers_dims = [input_layer, input_layer, 10, 10, output_layer]
+# trained_parameters, submission_name = model(train_pre, train_labels, layers_dims, train_size=train_size,
+#                                             num_epochs=num_epochs, learning_rate=learning_rate, use_l2=False, use_dropout=True,
+#                                             print_cost=False, print_accuracy=False, plot_cost=False, plot_accuracy=False,
+#                                             l2_beta=0.01, keep_prob=0.8, return_max_acc=True)
+# print(submission_name)
+# final_prediction = predict(test_pre, trained_parameters)
+# output_submission(test.index.values, final_prediction, 'PassengerId', 'Survived', submission_name)
