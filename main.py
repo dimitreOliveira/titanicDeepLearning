@@ -35,7 +35,7 @@ train_labels = convert_to_one_hot(train_dataset_size, train_raw_labels, CLASSES)
 
 input_layer = train_pre.shape[1]
 output_layer = 2
-num_epochs = 2001
+num_epochs = 1001
 learning_rate = 0.01
 train_size = 0.8
 layers_dims = [input_layer, 256, output_layer]
@@ -46,5 +46,5 @@ trained_parameters, submission_name = model(train_pre, train_labels, layers_dims
                                             use_dropout=False, print_cost=False, print_accuracy=False, plot_cost=True,
                                             plot_accuracy=True, l2_beta=0.01, keep_prob=0.5, return_max_acc=False)
 print(submission_name)
-final_prediction = predict(test_pre, trained_parameters)
-output_submission(test.index.values, final_prediction, 'PassengerId', 'Survived', submission_name)
+# final_prediction = predict(test_pre, trained_parameters)
+# output_submission(test.index.values, final_prediction, 'PassengerId', 'Survived', submission_name)

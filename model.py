@@ -1,9 +1,7 @@
-import matplotlib.pyplot as plt
 import tensorflow as tf
-import numpy as np
 from tensorflow.python.framework import ops
 from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy, \
-    l2_regularizer, forward_propagation_dropout
+    l2_regularizer, forward_propagation_dropout, build_submission_name, plot_model_cost, plot_model_accuracy
 from dataset import generate_train_subsets, mini_batches
 
 
@@ -137,53 +135,21 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
             parameters = sess.run(parameters)
         print("Parameters have been trained!")
 
-        # Calculate accuracy on the train and validation set
-        # train_accuracy = accuracy(prediction, train_labels)
         train_accuracy = accuracy(prediction, minibatch_Y)
         validation_accuracy = accuracy(valid_prediction.eval(), validation_labels)
         print('Train accuracy: {:.2f}'.format(train_accuracy))
         print('Validation accuracy: {:.2f}'.format(validation_accuracy))
-
-        # print lowest validation cost from all epochs
         print('Lowest validation cost: {:.2f} at epoch {}'.format(best_iteration[0], best_iteration[1]))
-
-        # print highest validation accuracy from all epochs
         print('Highest validation accuracy: {:.2f} at epoch {}'.format(best_iteration[2], best_iteration[3]))
 
-        # output submission file name
-        submission_name = 'tr_acc-{:.2f}-vd_acc{:.2f}-size{}-ly{}-epoch{}.csv'\
-            .format(train_accuracy, validation_accuracy, train_size, layers_dims, num_epochs)
-
-        if lr_decay != 0:
-            submission_name = 'lrdc{}-'.format(lr_decay) + submission_name
-        else:
-            submission_name = 'lr{}-'.format(learning_rate) + submission_name
-
-        if use_l2 is True:
-            submission_name = 'l2{}-'.format(l2_beta) + submission_name
-
-        if use_dropout is True:
-            submission_name = 'dk{}-'.format(keep_prob) + submission_name
-
-        if minibatch_size != num_examples:
-            submission_name = 'mb{}-'.format(minibatch_size) + submission_name
+        submission_name = build_submission_name(train_accuracy, validation_accuracy, train_size, layers_dims,
+                                                num_epochs, lr_decay, learning_rate, use_l2, l2_beta, use_dropout,
+                                                keep_prob, minibatch_size, num_examples)
 
         if plot_cost is True:
-            plt.plot(np.squeeze(train_costs), label='Train cost')
-            plt.plot(np.squeeze(validation_costs), label='Validation cost')
-            plt.ylabel('cost')
-            plt.xlabel('iterations (per tens)')
-            plt.title("Model: " + submission_name)
-            plt.legend()
-            plt.show()
+            plot_model_cost(train_costs, validation_costs, submission_name)
 
         if plot_accuracy is True:
-            plt.plot(np.squeeze(train_accuracies), label='Train accuracy')
-            plt.plot(np.squeeze(validation_accuracies), label='Validation accuracy')
-            plt.ylabel('accuracy')
-            plt.xlabel('iterations (per tens)')
-            plt.title("Model: " + submission_name)
-            plt.legend()
-            plt.show()
+            plot_model_accuracy(train_accuracies, validation_accuracies, submission_name)
 
         return parameters, submission_name

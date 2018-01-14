@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def create_placeholders(input_size, output_size):
@@ -202,3 +203,45 @@ def l2_regularizer(cost, l2_beta, parameters, n_layers):
         cost = tf.reduce_mean(cost + l2_beta * regularizer)
 
     return cost
+
+
+def build_submission_name(train_accuracy, validation_accuracy, train_size, layers_dims, num_epochs, lr_decay,
+                          learning_rate, use_l2, l2_beta, use_dropout, keep_prob, minibatch_size, num_examples):
+    submission_name = 'tr_acc-{:.2f}-vd_acc{:.2f}-size{}-ly{}-epoch{}.csv' \
+        .format(train_accuracy, validation_accuracy, train_size, layers_dims, num_epochs)
+
+    if lr_decay != 0:
+        submission_name = 'lrdc{}-'.format(lr_decay) + submission_name
+    else:
+        submission_name = 'lr{}-'.format(learning_rate) + submission_name
+
+    if use_l2 is True:
+        submission_name = 'l2{}-'.format(l2_beta) + submission_name
+
+    if use_dropout is True:
+        submission_name = 'dk{}-'.format(keep_prob) + submission_name
+
+    if minibatch_size != num_examples:
+        submission_name = 'mb{}-'.format(minibatch_size) + submission_name
+
+    return submission_name
+
+
+def plot_model_cost(train_costs, validation_costs, submission_name):
+    plt.plot(np.squeeze(train_costs), label='Train cost')
+    plt.plot(np.squeeze(validation_costs), label='Validation cost')
+    plt.ylabel('cost')
+    plt.xlabel('iterations (per tens)')
+    plt.title("Model: " + submission_name)
+    plt.legend()
+    plt.show()
+
+
+def plot_model_accuracy(train_accuracies, validation_accuracies, submission_name):
+    plt.plot(np.squeeze(train_accuracies), label='Train accuracy')
+    plt.plot(np.squeeze(validation_accuracies), label='Validation accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('iterations (per tens)')
+    plt.title("Model: " + submission_name)
+    plt.legend()
+    plt.show()
