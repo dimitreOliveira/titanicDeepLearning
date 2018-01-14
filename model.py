@@ -9,7 +9,8 @@ from dataset import generate_train_subsets, mini_batches
 
 def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, train_size=0.8,
           print_cost=True, print_accuracy=True, plot_cost=True, plot_accuracy=False, use_l2=False, l2_beta=0.01,
-          use_dropout=False, keep_prob=0.7, hidden_activation='relu', return_max_acc=False, minibatch_size=0):
+          use_dropout=False, keep_prob=0.7, hidden_activation='relu', return_max_acc=False, minibatch_size=0,
+          lr_decay=0):
     """
     Implements a n-layer tensorflow neural network: LINEAR->RELU*(n times)->LINEAR->SOFTMAX.
     :param train: training set
@@ -29,6 +30,7 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
     :param hidden_activation: activation function to be used on the hidden layers
     :param return_max_acc: True to return the highest accuracy from all epochs
     :param minibatch_size: size of th mini batch
+    :param lr_decay: if != 0, sets de learning rate decay on each epoch
     :return parameters: parameters learnt by the model. They can then be used to predict.
     :return submission_name: name for the trained model
     """
@@ -72,7 +74,13 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
         train_cost = l2_regularizer(train_cost, l2_beta, parameters, n_layers)
         validation_cost = l2_regularizer(validation_cost, l2_beta, parameters, n_layers)
 
-    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(train_cost)
+    if lr_decay != 0:
+        global_step = tf.Variable(0, trainable=False)
+        learning_rate = tf.train.inverse_time_decay(learning_rate, global_step=global_step, decay_rate=lr_decay,
+                                                    decay_steps=1)
+        optimizer = tf.train.AdamOptimizer(learning_rate).minimize(train_cost, global_step=global_step)
+    else:
+        optimizer = tf.train.AdamOptimizer(learning_rate).minimize(train_cost)
 
     init = tf.global_variables_initializer()
 
@@ -123,25 +131,6 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
                 train_accuracies.append(train_accuracy)
                 validation_accuracies.append(validation_accuracy)
 
-        if plot_cost is True:
-            plt.plot(np.squeeze(train_costs), label='Train cost')
-            plt.plot(np.squeeze(validation_costs), label='Validation cost')
-            plt.ylabel('cost')
-            plt.xlabel('iterations (per tens)')
-            plt.title("Learning rate =" + str(learning_rate))
-            plt.legend()
-            plt.show()
-
-        if plot_accuracy is True:
-            plt.plot(np.squeeze(train_accuracies), label='Train accuracy')
-            plt.plot(np.squeeze(validation_accuracies), label='Validation accuracy')
-            plt.ylabel('accuracy')
-            plt.xlabel('iterations (per tens)')
-            plt.title("Learning rate =" + str(learning_rate))
-            plt.legend()
-            plt.show()
-
-        # save the parameters in a variable
         if return_max_acc is True:
             parameters = best_acc_params
         else:
@@ -162,8 +151,13 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
         print('Highest validation accuracy: {:.2f} at epoch {}'.format(best_iteration[2], best_iteration[3]))
 
         # output submission file name
-        submission_name = 'tr_acc-{:.2f}-vd_acc{:.2f}-lr{}-size{}-ly{}-epoch{}.csv'\
-            .format(train_accuracy, validation_accuracy, learning_rate, train_size, layers_dims, num_epochs)
+        submission_name = 'tr_acc-{:.2f}-vd_acc{:.2f}-size{}-ly{}-epoch{}.csv'\
+            .format(train_accuracy, validation_accuracy, train_size, layers_dims, num_epochs)
+
+        if lr_decay != 0:
+            submission_name = 'lrdc{}-'.format(lr_decay) + submission_name
+        else:
+            submission_name = 'lr{}-'.format(learning_rate) + submission_name
 
         if use_l2 is True:
             submission_name = 'l2{}-'.format(l2_beta) + submission_name
@@ -173,5 +167,23 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
 
         if minibatch_size != num_examples:
             submission_name = 'mb{}-'.format(minibatch_size) + submission_name
+
+        if plot_cost is True:
+            plt.plot(np.squeeze(train_costs), label='Train cost')
+            plt.plot(np.squeeze(validation_costs), label='Validation cost')
+            plt.ylabel('cost')
+            plt.xlabel('iterations (per tens)')
+            plt.title("Model: " + submission_name)
+            plt.legend()
+            plt.show()
+
+        if plot_accuracy is True:
+            plt.plot(np.squeeze(train_accuracies), label='Train accuracy')
+            plt.plot(np.squeeze(validation_accuracies), label='Validation accuracy')
+            plt.ylabel('accuracy')
+            plt.xlabel('iterations (per tens)')
+            plt.title("Model: " + submission_name)
+            plt.legend()
+            plt.show()
 
         return parameters, submission_name
