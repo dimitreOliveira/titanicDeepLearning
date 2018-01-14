@@ -2,13 +2,14 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 from tensorflow.python.framework import ops
-from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy, l2_regularizer, forward_propagation_dropout
-from dataset import generate_train_subsets
+from methods import compute_cost, create_placeholders, forward_propagation, initialize_parameters, accuracy, \
+    l2_regularizer, forward_propagation_dropout
+from dataset import generate_train_subsets, mini_batches
 
 
 def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, train_size=0.8,
-          print_cost=True, print_accuracy=True, plot_cost=True, plot_accuracy=False, use_l2=False, l2_beta=0.01, use_dropout=False,
-          keep_prob=0.7, hidden_activation='relu', return_max_acc=False):
+          print_cost=True, print_accuracy=True, plot_cost=True, plot_accuracy=False, use_l2=False, l2_beta=0.01,
+          use_dropout=False, keep_prob=0.7, hidden_activation='relu', return_max_acc=False, minibatch_size=0):
     """
     Implements a n-layer tensorflow neural network: LINEAR->RELU*(n times)->LINEAR->SOFTMAX.
     :param train: training set
@@ -20,23 +21,26 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
     :param print_cost: True to print the cost every 500 epochs
     :param print_accuracy: True to print the accuracy every 500 epochs
     :param plot_cost: True to plot the train and validation cost
+    :param plot_accuracy: True to plot the train and validation accuracy
     :param use_l2: True to use l2 regularization
     :param l2_beta: beta parameter for the l2 regularization
     :param use_dropout: True to use dropout regularization
     :param keep_prob: probability to keep each node of each hidden layer (dropout)
     :param hidden_activation: activation function to be used on the hidden layers
+    :param return_max_acc: True to return the highest accuracy from all epochs
+    :param minibatch_size: size of th mini batch
     :return parameters: parameters learnt by the model. They can then be used to predict.
     :return submission_name: name for the trained model
     """
 
     ops.reset_default_graph()  # to be able to rerun the model without overwriting tf variables
 
-    # generate train and labels sub sets
     train_set, validation_set = generate_train_subsets(train, train_size)
     train_labels, validation_labels = generate_train_subsets(labels, train_size)
 
     input_size = train_set.shape[1]
     output_size = train_labels.shape[1]
+    num_examples = train_set.shape[0]
     n_layers = len(layers_dims)
     train_costs = []
     validation_costs = []
@@ -45,6 +49,9 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
     prediction = []
     best_iteration = [float('inf'), 0, float('-inf'), 0]
     best_acc_params = None
+    if minibatch_size == 0:
+        minibatch_size = num_examples
+    num_minibatches = int(num_examples / minibatch_size)
 
     x, y = create_placeholders(input_size, output_size)
     tf_valid_dataset = tf.cast(tf.constant(validation_set), tf.float32)
@@ -75,14 +82,20 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
         for epoch in range(num_epochs):
             train_epoch_cost = 0.
             validation_epoch_cost = 0.
-            feed_dict = {x: train_set, y: train_labels}
-            _, train_batch_cost, prediction, validation_batch_cost = sess.run([optimizer, train_cost, train_prediction,
-                                                                               validation_cost], feed_dict=feed_dict)
-            train_epoch_cost += train_batch_cost
-            validation_epoch_cost += validation_batch_cost
+
+            minibatches = mini_batches(train_set, train_labels, minibatch_size)
+
+            for minibatch in minibatches:
+                (minibatch_X, minibatch_Y) = minibatch
+                feed_dict = {x: minibatch_X, y: minibatch_Y}
+                _, minibatch_train_cost, prediction, minibatch_validation_cost = sess.run(
+                    [optimizer, train_cost, train_prediction, validation_cost], feed_dict=feed_dict)
+
+                train_epoch_cost += minibatch_train_cost / num_minibatches
+                validation_epoch_cost += minibatch_validation_cost / num_minibatches
 
             validation_accuracy = accuracy(valid_prediction.eval(), validation_labels)
-            train_accuracy = accuracy(prediction, train_labels)
+            train_accuracy = accuracy(prediction, minibatch_Y)
 
             if validation_epoch_cost < best_iteration[0]:
                 best_iteration[0] = validation_epoch_cost
@@ -136,7 +149,8 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
         print("Parameters have been trained!")
 
         # Calculate accuracy on the train and validation set
-        train_accuracy = accuracy(prediction, train_labels)
+        # train_accuracy = accuracy(prediction, train_labels)
+        train_accuracy = accuracy(prediction, minibatch_Y)
         validation_accuracy = accuracy(valid_prediction.eval(), validation_labels)
         print('Train accuracy: {:.2f}'.format(train_accuracy))
         print('Validation accuracy: {:.2f}'.format(validation_accuracy))
@@ -156,4 +170,8 @@ def model(train, labels, layers_dims, learning_rate=0.01, num_epochs=15001, trai
 
         if use_dropout is True:
             submission_name = 'dk{}-'.format(keep_prob) + submission_name
+
+        if minibatch_size != num_examples:
+            submission_name = 'mb{}-'.format(minibatch_size) + submission_name
+
         return parameters, submission_name

@@ -128,3 +128,24 @@ def pre_process_data(df):
     df['Age-bin'] = pd.cut(df['Age'], bins, labels=age_index).astype(int)
 
     return df
+
+
+def mini_batches(train_set, train_labels, mini_batch_size):
+    set_size = train_set.shape[0]
+    batches = []
+    num_complete_minibatches = math.floor(set_size / mini_batch_size)
+
+    for k in range(0, num_complete_minibatches):
+        mini_batch_x = train_set[k * mini_batch_size: (k + 1) * mini_batch_size]
+        mini_batch_y = train_labels[k * mini_batch_size: (k + 1) * mini_batch_size]
+        mini_batch = (mini_batch_x, mini_batch_y)
+        batches.append(mini_batch)
+
+    # Handling the end case (last mini-batch < mini_batch_size)
+    if set_size % mini_batch_size != 0:
+        mini_batch_x = train_set[(set_size - (set_size % mini_batch_size)):]
+        mini_batch_y = train_labels[(set_size - (set_size % mini_batch_size)):]
+        mini_batch = (mini_batch_x, mini_batch_y)
+        batches.append(mini_batch)
+
+    return batches

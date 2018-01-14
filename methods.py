@@ -169,7 +169,21 @@ def accuracy(predictions, labels):
     prediction_size = predictions.shape[0]
     prediction_accuracy = np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / prediction_size
 
-    return 100.0 * prediction_accuracy
+    return 100 * prediction_accuracy
+
+
+def minibatch_accuracy(predictions, labels):
+    """
+    calculate accuracy between two data sets
+    :param predictions: data set of predictions
+    :param labels: data set of labels (real values)
+    :return: percentage of correct predictions
+    """
+
+    prediction_size = predictions.shape[0]
+    prediction_accuracy = np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / prediction_size
+
+    return 100 * prediction_accuracy
 
 
 def l2_regularizer(cost, l2_beta, parameters, n_layers):
