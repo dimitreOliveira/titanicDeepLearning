@@ -80,7 +80,7 @@ def replace_na_with_median(dataset, column_name):
 
 
 def pre_process_data(df):
-    # setting `passengerID` as Index since it wont be necessary for the ana lysis
+    # setting `passengerID` as Index since it wont be necessary for the analysis
     df = df.set_index("PassengerId")
 
     # convert 'Sex' values
@@ -89,8 +89,36 @@ def pre_process_data(df):
     # We see that 2 passengers embarked data is missing, we fill those in as the most common Embarked value
     replace_na_with_mode(df, 'Embarked')
 
-    # convert 'Embarked' values
-    df['embarkation'] = df['Embarked'].map({'C': 0, 'Q': 1, 'S': 2}).astype(int)
+    # Replace missing age values with median ages by gender
+    for gender in df['gender'].unique():
+        median_age = df[(df['gender'] == gender)].Age.median()
+        df.loc[(df['Age'].isnull()) & (df['gender'] == gender), 'Age'] = median_age
+
+    # convert 'gender' values to new columns
+    df = pd.get_dummies(df, columns=['gender'])
+
+    # convert 'Embarked' values to new columns
+    df = pd.get_dummies(df, columns=['Embarked'])
+
+    # bin Fare into five intervals with equal amount of values
+    df['Fare-bin'] = pd.qcut(df['Fare'], 5, labels=[1, 2, 3, 4, 5]).astype(int)
+
+    # bin Age into seven intervals with equal amount of values
+    # ('baby','child','teenager','young','mid-age','over-50','senior')
+    bins = [0, 4, 12, 18, 30, 50, 65, 100]
+    age_index = (1, 2, 3, 4, 5, 6, 7)
+    df['Age-bin'] = pd.cut(df['Age'], bins, labels=age_index).astype(int)
+
+    # create a new column 'family' as a sum of 'SibSp' and 'Parch'
+    df['family'] = df['SibSp'] + df['Parch'] + 1
+    df['family'] = df['family'].map(lambda x: 4 if x > 4 else x)
+
+    # create a new column 'FTicket' as the first character of the 'Ticket'
+    df['FTicket'] = df['Ticket'].map(lambda x: x[0])
+    # combine smaller categories into one
+    df['FTicket'] = df['FTicket'].replace(['W', 'F', 'L', '5', '6', '7', '8', '9'], '4')
+    # convert 'FTicket' values to new columns
+    df = pd.get_dummies(df, columns=['FTicket'])
 
     # get titles from the name
     df['title'] = df.apply(lambda row: re.split('[,.]+', row['Name'])[1], axis=1)
@@ -101,31 +129,8 @@ def pre_process_data(df):
                                    ' the Countess': 'Other', ' Dr': 'Other', ' Jonkheer': 'Other', ' Mlle': 'Other',
                                    ' Sir': 'Other', ' Rev': 'Other', ' Ms': 'Other', ' Mme': 'Other', ' Major': 'Other',
                                    ' Mrs': 'Mrs'})
+    # convert 'title' values to new columns
     df = pd.get_dummies(df, columns=['title'])
-
-    # create a new column 'family' as a sum of 'SibSp' and 'Parch'
-    # df['family'] = df['SibSp'] + df['Parch']
-    # df['family'] = df['family'].map(lambda x: 4 if x > 4 else x)
-
-    # create a new column 'FTicket' as the first character of the 'Ticket'
-    df['FTicket'] = df['Ticket'].map(lambda x: x[0])
-    # combine smaller categories into one
-    df['FTicket'] = df['FTicket'].replace(['W', 'F', 'L', '5', '6', '7', '8', '9'], '4')
-    df = pd.get_dummies(df, columns=['FTicket'])
-
-    # bin Fare into five intervals with equal amount of values
-    df['Fare-bin'] = pd.qcut(df['Fare'], 5, labels=[1, 2, 3, 4, 5]).astype(int)
-
-    # Replace missing age values with median ages by gender
-    for gender in df['gender'].unique():
-        median_age = df[(df['gender'] == gender)].Age.median()
-        df.loc[(df['Age'].isnull()) & (df['gender'] == gender), 'Age'] = median_age
-
-    # bin Age into seven intervals with equal amount of values
-    # ('baby','child','teenager','young','mid-age','over-50','senior')
-    bins = [0, 4, 12, 18, 30, 50, 65, 100]
-    age_index = (1, 2, 3, 4, 5, 6, 7)
-    df['Age-bin'] = pd.cut(df['Age'], bins, labels=age_index).astype(int)
 
     return df
 
