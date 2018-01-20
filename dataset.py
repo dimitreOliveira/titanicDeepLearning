@@ -46,6 +46,12 @@ def generate_train_subsets(train_data, percentage, print_info=False):
 
 
 def convert_to_one_hot(dataset_size, raw_labels, classes):
+    """
+    :param dataset_size: size of the data set
+    :param raw_labels: array with the labels set
+    :param classes: number of output classes
+    :return: one hot labels array
+    """
     labels = np.zeros((dataset_size, classes))
     labels[np.arange(dataset_size), raw_labels] = 1
 
@@ -72,14 +78,29 @@ def output_submission(test_ids, predictions, id_column, predction_column, file_n
 
 
 def replace_na_with_mode(dataset, column_name):
+    """
+    :param dataset: data set
+    :param column_name: column to perform function
+    :return: updated data set
+    """
     dataset.loc[dataset.Embarked.isnull(), column_name] = dataset[column_name].mode()[0]
 
 
 def replace_na_with_median(dataset, column_name):
+    """
+    :param dataset: data set
+    :param column_name: column to perform function
+    :return: updated data set
+    """
     dataset.loc[dataset.Embarked.isnull(), column_name] = dataset[column_name].median()
 
 
 def pre_process_data(df):
+    """
+    Perform a number of pre process functions on the data set
+    :param df: pandas data frame
+    :return: updated data frame
+    """
     # setting `passengerID` as Index since it wont be necessary for the analysis
     df = df.set_index("PassengerId")
 
@@ -136,6 +157,13 @@ def pre_process_data(df):
 
 
 def mini_batches(train_set, train_labels, mini_batch_size):
+    """
+    Generate mini batches from the data set (data and labels)
+    :param train_set: data set with the examples
+    :param train_labels: data set with the labels
+    :param mini_batch_size: mini batch size
+    :return: mini batches
+    """
     set_size = train_set.shape[0]
     batches = []
     num_complete_minibatches = math.floor(set_size / mini_batch_size)

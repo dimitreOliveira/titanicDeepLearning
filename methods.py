@@ -6,14 +6,10 @@ import matplotlib.pyplot as plt
 def create_placeholders(input_size, output_size):
     """
     Creates the placeholders for the tensorflow session.
-
-    Arguments:
-    input_size -- scalar, input size
-    output_size -- scalar, output size
-
-    Returns:
-    X -- placeholder for the data input, of shape [None, input_size] and dtype "float"
-    Y -- placeholder for the input labels, of shape [None, output_size] and dtype "float"
+    :param input_size: scalar, input size
+    :param output_size: scalar, output size
+    :return: X  placeholder for the data input, of shape [None, input_size] and dtype "float"
+    :return: Y placeholder for the input labels, of shape [None, output_size] and dtype "float"
     """
 
     x = tf.placeholder(shape=(None, input_size), dtype=tf.float32, name="X")
@@ -25,11 +21,10 @@ def create_placeholders(input_size, output_size):
 def forward_propagation(x, parameters, hidden_activation='relu'):
     """
     Implement forward propagation for the [LINEAR->RELU]*(L-1)->LINEAR-> computation
-    Arguments:
-    x -- data, pandas array of shape (input size, number of examples)
-    parameters -- output of initialize_parameters()
-    Returns:
-    al -- last LINEAR value
+    :param x: data, pandas array of shape (input size, number of examples)
+    :param parameters: output of initialize_parameters()
+    :param hidden_activation: activation function of the hidden layers
+    :return: last LINEAR value
     """
 
     a = x
@@ -49,12 +44,11 @@ def forward_propagation(x, parameters, hidden_activation='relu'):
 def forward_propagation_dropout(x, parameters, keep_prob, hidden_activation='relu'):
     """
     Implement forward propagation with dropout for the [LINEAR->RELU]*(L-1)->LINEAR-> computation
-    Arguments:
-    x -- data, pandas array of shape (input size, number of examples)
-    parameters -- output of initialize_parameters()
-    parameters -- keep_prob = probability to keep each node of the layer
-    Returns:
-    al -- last LINEAR value
+    :param x: data, pandas array of shape (input size, number of examples)
+    :param parameters: output of initialize_parameters()
+    :param keep_prob: probability to keep each node of the layer
+    :param hidden_activation: activation function of the hidden layers
+    :return: last LINEAR value
     """
 
     a_dropout = x
@@ -76,13 +70,11 @@ def forward_propagation_dropout(x, parameters, keep_prob, hidden_activation='rel
 def linear_activation_forward(a_prev, w, b, activation):
     """
     Implement the forward propagation for the LINEAR->ACTIVATION layer
-    Arguments:
-    a_prev -- activations from previous layer (or input data): (size of previous layer, number of examples)
-    w -- weights matrix: numpy array of shape (size of current layer, size of previous layer)
-    b -- bias vector, numpy array of shape (size of the current layer, 1)
-    activation -- the activation to be used in this layer, stored as a text string: "sigmoid" or "relu"
-    Returns:
-    a -- the output of the activation function, also called the post-activation value
+    :param a_prev: activations from previous layer (or input data): (size of previous layer, number of examples)
+    :param w: weights matrix: numpy array of shape (size of current layer, size of previous layer)
+    :param b: bias vector, numpy array of shape (size of the current layer, 1)
+    :param activation: the activation to be used in this layer, stored as a text string: "sigmoid" or "relu"
+    :return: the output of the activation function, also called the post-activation value
     """
 
     a = None
@@ -103,10 +95,8 @@ def linear_activation_forward(a_prev, w, b, activation):
 
 def initialize_parameters(layer_dims):
     """
-    Arguments:
-    layer_dims -- python array (list) containing the dimensions of each layer in our network
-    Returns:
-    parameters -- python dictionary containing your parameters "w1", "b1", ..., "wn", "bn":
+    :param layer_dims: python array (list) containing the dimensions of each layer in our network
+    :return: python dictionary containing your parameters "w1", "b1", ..., "wn", "bn":
                     Wl -- weight matrix of shape (layer_dims[l], layer_dims[l-1])
                     bl -- bias vector of shape (layer_dims[l], 1)
     """
@@ -124,14 +114,9 @@ def initialize_parameters(layer_dims):
 
 def compute_cost(z3, y):
     """
-    Computes the cost
-
-    Arguments:
-    Z3 -- output of forward propagation (output of the last LINEAR unit), of shape (6, number of examples)
-    Y -- "true" labels vector placeholder, same shape as Z3
-
-    Returns:
-    cost - Tensor of the cost function
+    :param z3: output of forward propagation (output of the last LINEAR unit), of shape (6, number of examples)
+    :param y: "true" labels vector placeholder, same shape as Z3
+    :return: Tensor of the cost function
     """
 
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=z3, labels=y))
@@ -207,6 +192,23 @@ def l2_regularizer(cost, l2_beta, parameters, n_layers):
 
 def build_submission_name(train_accuracy, validation_accuracy, train_size, layers_dims, num_epochs, lr_decay,
                           learning_rate, use_l2, l2_beta, use_dropout, keep_prob, minibatch_size, num_examples):
+    """
+    builds a string (submission file name), based on the model parameters
+    :param train_accuracy: model train accuracy
+    :param validation_accuracy: model validation accuracy
+    :param train_size: model train size
+    :param layers_dims: model layers dimensions
+    :param num_epochs: model number of epochs
+    :param lr_decay: model learning rate decay
+    :param learning_rate: model learning rate
+    :param use_l2: if model uses l2 normalization
+    :param l2_beta: beta used on l2 normalization
+    :param use_dropout: if model uses dropout normalization
+    :param keep_prob: keep probability used on dropout normalization
+    :param minibatch_size: model mini batch size (0 to do not use mini batches)
+    :param num_examples: number of model examples (training data)
+    :return: built string
+    """
     submission_name = 'tr_acc-{:.2f}-vd_acc{:.2f}-size{}-ly{}-epoch{}.csv' \
         .format(train_accuracy, validation_accuracy, train_size, layers_dims, num_epochs)
 
@@ -228,6 +230,12 @@ def build_submission_name(train_accuracy, validation_accuracy, train_size, layer
 
 
 def plot_model_cost(train_costs, validation_costs, submission_name):
+    """
+    :param train_costs: array with the costs from the model training
+    :param validation_costs: array with the costs from the model validation
+    :param submission_name: name of the submission (used for the plot title)
+    :return:
+    """
     plt.plot(np.squeeze(train_costs), label='Train cost')
     plt.plot(np.squeeze(validation_costs), label='Validation cost')
     plt.ylabel('cost')
@@ -238,6 +246,12 @@ def plot_model_cost(train_costs, validation_costs, submission_name):
 
 
 def plot_model_accuracy(train_accuracies, validation_accuracies, submission_name):
+    """
+    :param train_accuracies: array with the accuracies from the model training
+    :param validation_accuracies: array with the accuracies from the model validation
+    :param submission_name:  name of the submission (used for the plot title)
+    :return:
+    """
     plt.plot(np.squeeze(train_accuracies), label='Train accuracy')
     plt.plot(np.squeeze(validation_accuracies), label='Validation accuracy')
     plt.ylabel('accuracy')
