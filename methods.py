@@ -116,7 +116,7 @@ def initialize_parameters(layer_dims):
 
     for l in range(1, n_layers):
         parameters['w' + str(l)] = tf.get_variable('w' + str(l), [layer_dims[l - 1], layer_dims[l]],
-                                                   initializer=tf.contrib.layers.xavier_initializer(seed=1))
+                                                   initializer=tf.contrib.layers.xavier_initializer())
         parameters['b' + str(l)] = tf.get_variable('b' + str(l), [layer_dims[l]], initializer=tf.zeros_initializer())
 
     return parameters
