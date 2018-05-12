@@ -1,4 +1,3 @@
-import math
 import csv
 import re
 import numpy as np
@@ -24,40 +23,6 @@ def load_data(train_path, test_path):
     return train_data, test_data
 
 
-def generate_train_subsets(train_data, percentage, print_info=False):
-    """
-    :param train_data: total train data
-    :param percentage: percentage of training set used for actual training
-    :param print_info: is True prints information about the derived subsets
-    :return: train_dataset 80% of data as train set
-             validate_dataset 20% data as validate set
-    """
-    data_size = train_data.shape[0]
-    train_size = math.ceil(data_size * percentage)
-    validate_size = data_size - train_size
-    train_dataset = train_data[validate_size:]
-    validate_dataset = train_data[:validate_size]
-
-    if print_info is True:
-        print('train', train_dataset.shape)
-        print('validate', validate_dataset.shape)
-
-    return train_dataset, validate_dataset
-
-
-def convert_to_one_hot(dataset_size, raw_labels, classes):
-    """
-    :param dataset_size: size of the data set
-    :param raw_labels: array with the labels set
-    :param classes: number of output classes
-    :return: one hot labels array
-    """
-    labels = np.zeros((dataset_size, classes))
-    labels[np.arange(dataset_size), raw_labels] = 1
-
-    return labels
-
-
 def output_submission(test_ids, predictions, id_column, predction_column, file_name):
     """
     :param test_ids: vector with test dataset ids
@@ -77,24 +42,6 @@ def output_submission(test_ids, predictions, id_column, predction_column, file_n
     print('Output complete')
 
 
-def replace_na_with_mode(dataset, column_name):
-    """
-    :param dataset: data set
-    :param column_name: column to perform function
-    :return: updated data set
-    """
-    dataset.loc[dataset.Embarked.isnull(), column_name] = dataset[column_name].mode()[0]
-
-
-def replace_na_with_median(dataset, column_name):
-    """
-    :param dataset: data set
-    :param column_name: column to perform function
-    :return: updated data set
-    """
-    dataset.loc[dataset.Embarked.isnull(), column_name] = dataset[column_name].median()
-
-
 def pre_process_data(df):
     """
     Perform a number of pre process functions on the data set
@@ -108,7 +55,7 @@ def pre_process_data(df):
     df['gender'] = df['Sex'].map({'female': 0, 'male': 1}).astype(int)
 
     # We see that 2 passengers embarked data is missing, we fill those in as the most common Embarked value
-    replace_na_with_mode(df, 'Embarked')
+    df.loc[df.Embarked.isnull(), 'Embarked'] = df['Embarked'].mode()[0]
 
     # Replace missing age values with median ages by gender
     for gender in df['gender'].unique():
@@ -153,6 +100,8 @@ def pre_process_data(df):
     # convert 'title' values to new columns
     df = pd.get_dummies(df, columns=['title'])
 
+    df = df.drop(['Name', 'Ticket', 'Cabin', 'Sex', 'Fare', 'Age'], axis=1)
+
     return df
 
 
@@ -166,7 +115,7 @@ def mini_batches(train_set, train_labels, mini_batch_size):
     """
     set_size = train_set.shape[0]
     batches = []
-    num_complete_minibatches = math.floor(set_size / mini_batch_size)
+    num_complete_minibatches = set_size // mini_batch_size
 
     for k in range(0, num_complete_minibatches):
         mini_batch_x = train_set[k * mini_batch_size: (k + 1) * mini_batch_size]
