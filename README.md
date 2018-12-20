@@ -32,8 +32,8 @@ Binary classification
 Python and R basics
 
 ### Dependencies:
-* [numpy](http://www.numpy.org/)
-* [pandas](http://pandas.pydata.org/)
-* [sklearn](https://scikit-learn.org/stable/)
-* [tensorflow](https://www.tensorflow.org/)
-* [matplotlib](http://matplotlib.org/)
+* [NumPy](http://www.numpy.org/)
+* [Pandas](http://pandas.pydata.org/)
+* [Sklearn](https://scikit-learn.org/stable/)
+* [Tensorflow](https://www.tensorflow.org/)
+* [Matplotlib](http://matplotlib.org/)
